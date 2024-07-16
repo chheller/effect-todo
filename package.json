@@ -1,0 +1,19 @@
+{
+	"dependencies": {
+		"@effect/platform": "^0.59.0",
+		"@effect/platform-bun": "^0.39.0",
+		"effect": "^3.5.3",
+		"mongoose": "^8.5.1",
+		"pino": "",
+		"pino-pretty": "^11.2.1"
+	},
+	"name": "effect-todo",
+	"module": "index.ts",
+	"type": "module",
+	"devDependencies": {
+		"@biomejs/biome": "^1.8.3",
+		"@types/bun": "latest",
+		"typescript": "^5.5.3"
+	},
+	"trustedDependencies": ["@biomejs/biome"]
+}
