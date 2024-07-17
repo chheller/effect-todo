@@ -9,39 +9,50 @@ import {
 	HttpServer,
 	HttpServerResponse,
 } from "@effect/platform";
-import { BunHttpServer, BunRuntime } from "@effect/platform-bun";
+import {
+	BunContext,
+	BunEtag,
+	BunHttpPlatform,
+	BunHttpServer,
+	BunRuntime,
+} from "@effect/platform-bun";
 import { runMain } from "@effect/platform-bun/BunRuntime";
 import { Context, Effect, Layer, pipe, Schedule } from "effect";
 
-interface HealthCheckService {
-	readonly check: () => Effect.Effect<string, HttpClientError.HttpClientError>;
-}
-const HealthCheckService =
-	Context.GenericTag<HealthCheckService>("HealthCheckService");
-
-const makeHealthCheckService = Effect.gen(function* () {
-	const httpClient = yield* HttpClient.HttpClient;
-	const clientWithBaseURl = httpClient.pipe(
-		HttpClient.filterStatusOk,
-		HttpClient.mapRequest(
-			HttpClientRequest.prependUrl("http://localhost:3000"),
-		),
-	);
-	const check = () =>
-		HttpClientRequest.get("/health").pipe(
-			clientWithBaseURl,
-			HttpClientResponse.text,
-		);
-
-	return HealthCheckService.of({ check });
-});
-
-const HealthCheckServiceLive = Layer.effect(
+import {
 	HealthCheckService,
-	makeHealthCheckService,
-).pipe(Layer.provide(HttpClient.layer));
+	HealthCheckServiceLive,
+} from "./client/health-service/health-service";
+import { ConfigService, ConfigServiceLive } from "./config-service";
+import { Tag } from "effect/Context";
 
-const ServerLive = BunHttpServer.layer({ port: 3000 });
+
+// const ServerLive = Layer.effect(
+// 	pipe(
+// 		Tag<HttpServer>(),
+// 		Effect.flatMap(ConfigService, (svc) =>
+// 			BunHttpServer.make({
+// 				port: svc.get().port,
+// 				development: svc.get().isDevelopment,
+// 			}),
+// 		),
+// 	),
+// );
+
+const ServerLive = Layer.mergeAll(
+	Layer.scoped(
+		HttpServer.HttpServer,
+		Effect.flatMap(ConfigService, (svc) =>
+			BunHttpServer.make({
+				port: svc.get().port,
+				development: svc.get().isDevelopment,
+			}),
+		),
+	),
+	BunHttpPlatform.layer,
+	BunEtag.layerWeak,
+	BunContext.layer,
+);
 
 const HttpLive = HttpRouter.empty.pipe(
 	HttpRouter.get("/health", HttpServerResponse.text("OK")),
@@ -49,6 +60,7 @@ const HttpLive = HttpRouter.empty.pipe(
 	HttpServer.withLogAddress,
 	Layer.provide(HealthCheckServiceLive),
 	Layer.provide(ServerLive),
+	Layer.provide(ConfigServiceLive),
 );
 
 const HttpClientLive = Layer.scopedDiscard(
