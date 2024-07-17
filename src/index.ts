@@ -1,9 +1,4 @@
-import "./database";
 import {
-	HttpClient,
-	type HttpClientError,
-	HttpClientRequest,
-	HttpClientResponse,
 	HttpMiddleware,
 	HttpRouter,
 	HttpServer,
@@ -14,30 +9,16 @@ import {
 	BunEtag,
 	BunHttpPlatform,
 	BunHttpServer,
-	BunRuntime,
 } from "@effect/platform-bun";
 import { runMain } from "@effect/platform-bun/BunRuntime";
-import { Context, Effect, Layer, pipe, Schedule } from "effect";
+import { Effect, Layer } from "effect";
 
-import {
-	HealthCheckService,
-	HealthCheckServiceLive,
-} from "./client/health-service/health-service";
+import { HealthCheckServiceLive } from "./client/health-service/health-service";
 import { ConfigService, ConfigServiceLive } from "./config-service";
-import { Tag } from "effect/Context";
+import { MongoDatabaseProviderLive } from "./database/mongo-database-provider";
+import { TodoCrudService, TodoCrudServiceLive } from "./todo/todo-service";
+import { TodoHttpLive } from "./todo/todo-http-service";
 
-
-// const ServerLive = Layer.effect(
-// 	pipe(
-// 		Tag<HttpServer>(),
-// 		Effect.flatMap(ConfigService, (svc) =>
-// 			BunHttpServer.make({
-// 				port: svc.get().port,
-// 				development: svc.get().isDevelopment,
-// 			}),
-// 		),
-// 	),
-// );
 
 const ServerLive = Layer.mergeAll(
 	Layer.scoped(
@@ -56,21 +37,14 @@ const ServerLive = Layer.mergeAll(
 
 const HttpLive = HttpRouter.empty.pipe(
 	HttpRouter.get("/health", HttpServerResponse.text("OK")),
+	HttpRouter.mount("/todo", TodoHttpLive),
 	HttpServer.serve(HttpMiddleware.logger),
 	HttpServer.withLogAddress,
-	Layer.provide(HealthCheckServiceLive),
 	Layer.provide(ServerLive),
+	Layer.provide(TodoCrudServiceLive),
+	Layer.provide(MongoDatabaseProviderLive),
 	Layer.provide(ConfigServiceLive),
 );
 
-const HttpClientLive = Layer.scopedDiscard(
-	Effect.flatMap(HealthCheckService, (svc) =>
-		svc
-			.check()
-			.pipe(Effect.tap(Effect.log), Effect.schedule(Schedule.spaced(1000))),
-	),
-).pipe(Layer.provide(HealthCheckServiceLive));
-
-runMain(Layer.launch(HttpClientLive));
 
 runMain(Layer.launch(HttpLive));

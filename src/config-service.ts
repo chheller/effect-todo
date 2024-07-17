@@ -20,4 +20,4 @@ export const makeConfigService = Effect.gen(function* () {
 	return ConfigService.of({ get });
 });
 
-export const ConfigServiceLive = Layer.effect(ConfigService, makeConfigService);
+export const ConfigServiceLive = Layer.scoped(ConfigService, makeConfigService);

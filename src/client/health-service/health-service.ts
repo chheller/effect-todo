@@ -4,7 +4,7 @@ import {
 	HttpClientRequest,
 	HttpClientResponse,
 } from "@effect/platform";
-import { Effect, Context, Layer } from "effect";
+import { Effect, Context, Layer, Schedule } from "effect";
 
 export interface HealthCheckService {
 	readonly check: () => Effect.Effect<string, HttpClientError.HttpClientError>;
@@ -14,7 +14,7 @@ export const HealthCheckService =
 
 export const makeHealthCheckService = Effect.gen(function* () {
 	const httpClient = yield* HttpClient.HttpClient;
-	const clientWithBaseURl = httpClient.pipe(
+	const clientWithBaseUrl = httpClient.pipe(
 		HttpClient.filterStatusOk,
 		HttpClient.mapRequest(
 			HttpClientRequest.prependUrl("http://localhost:3000"),
@@ -22,7 +22,7 @@ export const makeHealthCheckService = Effect.gen(function* () {
 	);
 	const check = () =>
 		HttpClientRequest.get("/health").pipe(
-			clientWithBaseURl,
+			clientWithBaseUrl,
 			HttpClientResponse.text,
 		);
 
@@ -33,3 +33,12 @@ export const HealthCheckServiceLive = Layer.effect(
 	HealthCheckService,
 	makeHealthCheckService,
 ).pipe(Layer.provide(HttpClient.layer));
+
+
+export const HttpClientLive = Layer.scopedDiscard(
+	Effect.flatMap(HealthCheckService, (svc) =>
+		svc
+			.check()
+			.pipe(Effect.tap(Effect.log), Effect.schedule(Schedule.spaced(1000))),
+	),
+).pipe(Layer.provide(HealthCheckServiceLive));
