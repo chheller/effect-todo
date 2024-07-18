@@ -13,11 +13,10 @@ import {
 import { runMain } from "@effect/platform-bun/BunRuntime";
 import { Effect, Layer } from "effect";
 
-import { HealthCheckServiceLive } from "./client/health-service/health-service";
 import { ConfigService, ConfigServiceLive } from "./config-service";
 import { MongoDatabaseProviderLive } from "./database/mongo-database-provider";
-import { TodoCrudService, TodoCrudServiceLive } from "./todo/todo-service";
 import { TodoHttpLive } from "./todo/todo-http-service";
+import { Todo } from "./todo/todo-service";
 
 
 const ServerLive = Layer.mergeAll(
@@ -41,7 +40,7 @@ const HttpLive = HttpRouter.empty.pipe(
 	HttpServer.serve(HttpMiddleware.logger),
 	HttpServer.withLogAddress,
 	Layer.provide(ServerLive),
-	Layer.provide(TodoCrudServiceLive),
+	Layer.provide(Todo.TodoCrudServiceLive),
 	Layer.provide(MongoDatabaseProviderLive),
 	Layer.provide(ConfigServiceLive),
 );
