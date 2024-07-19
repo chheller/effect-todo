@@ -3,6 +3,14 @@ import { MongoDatabaseProvider } from "../database/mongo-database-provider";
 import { Schema as S } from "@effect/schema";
 import { TypeIdError } from "@effect/platform/Error";
 import { TaggedError } from "effect/Data";
+import type {
+	Collection,
+	DeleteResult,
+	InsertOneResult,
+	ObjectId,
+	OptionalId,
+	UpdateResult,
+} from "mongodb";
 
 export namespace Todo {
 	export class GenericTodoRepoError extends Error {
@@ -28,32 +36,33 @@ export namespace Todo {
 		...TodoCommonDto.fields,
 	});
 
-	export const TodoModel = S.Struct({
-		_id: TodoId,
-		...TodoCommonDto.fields,
-	});
-
 	export const TodoResponseDto = S.Struct({
-		_id: TodoId,
+		id: TodoId,
 		...TodoCommonDto.fields,
 	});
 
 	export type TodoRequestDto = S.Schema.Type<typeof TodoRequestDto>;
 	export type TodoResponseDto = S.Schema.Type<typeof TodoResponseDto>;
-	export type TodoModel = S.Schema.Type<typeof TodoModel>;
+	export type TodoModel = {
+		description: string;
+		done: boolean;
+		id: ObjectId;
+	};
 
 	export interface TodoCrudService {
 		readonly create: (
 			todo: Todo.TodoRequestDto,
 		) => Effect.Effect<Todo.TodoModel, GenericTodoRepoError>;
 		readonly read: (
-			id: string,
+			id: ObjectId,
 		) => Effect.Effect<Todo.TodoModel | null, GenericTodoRepoError>;
 		readonly update: (
-			id: string,
+			id: ObjectId,
 			todo: Todo.TodoRequestDto,
-		) => Effect.Effect<Todo.TodoModel, GenericTodoRepoError>;
-		readonly delete: (id: string) => Effect.Effect<void, GenericTodoRepoError>;
+		) => Effect.Effect<UpdateResult<Todo.TodoModel>, GenericTodoRepoError>;
+		readonly delete: (
+			id: ObjectId,
+		) => Effect.Effect<DeleteResult, GenericTodoRepoError>;
 		readonly readMany: () => Effect.Effect<
 			Todo.TodoModel[],
 			GenericTodoRepoError
@@ -65,38 +74,54 @@ export namespace Todo {
 
 	export const makeTodoCrudService = Effect.gen(function* () {
 		const db = yield* MongoDatabaseProvider;
-		const collection = db.client
-			.db("effect")
-			.collection<Omit<Todo.TodoModel, "_id">>("todos");
+		const collection = db.client.db("effect").collection<Todo.TodoModel>("todos");
+
+		const read = (_id: ObjectId) =>
+			Effect.tryPromise({
+				try: () => collection.findOne({ _id }),
+				catch: (e) => new GenericTodoRepoError(e),
+			});
 
 		const create = (todo: Todo.TodoRequestDto) =>
-			Effect.tryPromise({
-				try: () => collection.insertOne(todo),
-				catch: (e) => Effect.fail(new GenericTodoRepoError(e)),
+			Effect.gen(function* () {
+				const { insertedId } = yield* Effect.tryPromise({
+					try: () =>
+						(
+							collection as unknown as Collection<Omit<Todo.TodoModel, "id">>
+						).insertOne(todo),
+					catch: (e) => new GenericTodoRepoError(e),
+				});
+				if (insertedId == null) {
+					return yield* Effect.fail(
+						new GenericTodoRepoError("Failed to insert document"),
+					);
+				}
+				const newTodo = yield* read(insertedId);
+				if (newTodo == null) {
+					return yield* Effect.fail(
+						new GenericTodoRepoError("Failed to read inserted document"),
+					);
+				}
+				return newTodo;
 			});
 
-		const read = (id: string) =>
+		const update = (_id: ObjectId, todo: Todo.TodoRequestDto) =>
 			Effect.tryPromise({
-				try: () => collection.findOne({ id }),
-				catch: (e) => Effect.fail(new GenericTodoRepoError(e)),
+				try: () =>
+					collection.updateOne({ _id }, { $set: todo }, { upsert: false }),
+				catch: (e) => new GenericTodoRepoError(e),
 			});
 
-		const update = (id: string, todo: Todo.TodoRequestDto) =>
+		const delete_ = (_id: ObjectId) =>
 			Effect.tryPromise({
-				try: () => collection.updateOne({ id }, todo),
-				catch: (e) => Effect.fail(new GenericTodoRepoError(e)),
-			}).pipe(Effect.map(() => todo));
-
-		const delete_ = (id: string) =>
-			Effect.tryPromise({
-				try: () => collection.deleteOne({ id }),
-				catch: (e) => Effect.fail(new GenericTodoRepoError(e)),
-			}).pipe(Effect.map(() => undefined));
+				try: () => collection.deleteOne({ _id }),
+				catch: (e) => new GenericTodoRepoError(e),
+			});
 
 		const readMany = () =>
 			Effect.tryPromise({
 				try: () => collection.find({}).toArray(),
-				catch: (e) => Effect.fail(new GenericTodoRepoError(e)),
+				catch: (e) => new GenericTodoRepoError(e),
 			});
 
 		return TodoCrudService.of({
@@ -113,4 +138,3 @@ export namespace Todo {
 		makeTodoCrudService,
 	);
 }
-

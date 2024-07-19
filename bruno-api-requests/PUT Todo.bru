@@ -1,18 +1,18 @@
 meta {
-  name: TODO
+  name: PUT Todo
   type: http
-  seq: 2
+  seq: 5
 }
 
-post {
-  url: {{baseUrl}}/todo
+patch {
+  url: {{baseUrl}}/todo/6698a1a23752454ac7b9092c
   body: json
   auth: none
 }
 
 body:json {
   {
-    "done": false,
+    "done": true,
     "description": "Implement POST"
   }
 }

@@ -10,5 +10,5 @@ export namespace HttpErrorHandlers {
 		);
 
 	export const handleInternalServerError = <E extends Error>(e: E) =>
-		HttpServerResponse.unsafeJson({ error: e }, { status: 500 });
+		HttpServerResponse.unsafeJson({ error: e.message }, { status: 500 });
 }
