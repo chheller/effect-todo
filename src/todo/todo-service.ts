@@ -73,8 +73,13 @@ export namespace Todo {
 		Context.GenericTag<TodoCrudService>("TodoCrudService");
 
 	export const makeTodoCrudService = Effect.gen(function* () {
-		const db = yield* MongoDatabaseProvider;
-		const collection = db.client.db("effect").collection<Todo.TodoModel>("todos");
+		const { use } = yield* MongoDatabaseProvider;
+		const collection = yield* use((client) =>
+			Promise.resolve(client.db("effect").collection<Todo.TodoModel>("todos")),
+		);
+
+		// const { client } = yield* MongoDatabaseProvider;
+		// const collection = client.db("effect").collection("todos");
 
 		const read = (_id: ObjectId) =>
 			Effect.tryPromise({

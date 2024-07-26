@@ -35,12 +35,12 @@ const getAllTodosHandler = Effect.gen(function* () {
 );
 
 const createTodoHandler = Effect.gen(function* () {
-	const svc = yield* Todo.TodoCrudService;
-	const request = yield* HttpServerRequest.HttpServerRequest;
-	const body = yield* request.json;
-	const dto = yield* Schema.decodeUnknown(Todo.TodoRequestDto)(body);
-	const result = yield* svc.create(dto);
-	return HttpServerResponse.unsafeJson(result);
+		const svc = yield* Todo.TodoCrudService;
+		const request = yield* HttpServerRequest.HttpServerRequest;
+		const body = yield* request.json;
+		const dto = yield* Schema.decodeUnknown(Todo.TodoRequestDto)(body);
+		const result = yield* svc.create(dto);
+		return HttpServerResponse.unsafeJson(result);
 }).pipe(
 	Effect.catchTags({
 		GenericTodoRepoError: HttpErrorHandlers.handleInternalServerError,
