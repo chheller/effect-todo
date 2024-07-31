@@ -10,7 +10,11 @@ import type {
 	ObjectId,
 	OptionalId,
 	UpdateResult,
+	WithId,
+	WithoutId,
 } from "mongodb";
+import { error } from "effect/Console";
+import * as _ from "lodash";
 
 export namespace Todo {
 	export class GenericTodoRepoError extends Error {
@@ -54,14 +58,14 @@ export namespace Todo {
 			todo: Todo.TodoRequestDto,
 		) => Effect.Effect<Todo.TodoModel, GenericTodoRepoError>;
 		readonly read: (
-			id: ObjectId,
-		) => Effect.Effect<Todo.TodoModel | null, GenericTodoRepoError>;
+			_id: ObjectId,
+		) => Effect.Effect<WithId<Todo.TodoModel> | null, GenericTodoRepoError>;
 		readonly update: (
-			id: ObjectId,
+			_id: ObjectId,
 			todo: Todo.TodoRequestDto,
 		) => Effect.Effect<UpdateResult<Todo.TodoModel>, GenericTodoRepoError>;
 		readonly delete: (
-			id: ObjectId,
+			_id: ObjectId,
 		) => Effect.Effect<DeleteResult, GenericTodoRepoError>;
 		readonly readMany: () => Effect.Effect<
 			Todo.TodoModel[],
@@ -73,29 +77,24 @@ export namespace Todo {
 		Context.GenericTag<TodoCrudService>("TodoCrudService");
 
 	export const makeTodoCrudService = Effect.gen(function* () {
-		const { use } = yield* MongoDatabaseProvider;
-		const collection = yield* use((client) =>
-			Promise.resolve(client.db("effect").collection<Todo.TodoModel>("todos")),
-		);
-
-		// const { client } = yield* MongoDatabaseProvider;
-		// const collection = client.db("effect").collection("todos");
+		const { use, useCollection } = yield* MongoDatabaseProvider;
+		const collection = yield* use<TodoModel>("effect", "todos");
 
 		const read = (_id: ObjectId) =>
-			Effect.tryPromise({
-				try: () => collection.findOne({ _id }),
-				catch: (e) => new GenericTodoRepoError(e),
-			});
+			useCollection(
+				collection,
+				({ findOne }) => findOne({ _id }),
+				(e) => new GenericTodoRepoError(e),
+			);
 
 		const create = (todo: Todo.TodoRequestDto) =>
 			Effect.gen(function* () {
-				const { insertedId } = yield* Effect.tryPromise({
-					try: () =>
-						(
-							collection as unknown as Collection<Omit<Todo.TodoModel, "id">>
-						).insertOne(todo),
-					catch: (e) => new GenericTodoRepoError(e),
-				});
+				const { insertedId } = yield* useCollection(
+					collection,
+					({ insertOne }) => insertOne(todo as WithoutId<TodoModel>),
+					(e) => new GenericTodoRepoError(e),
+				);
+
 				if (insertedId == null) {
 					return yield* Effect.fail(
 						new GenericTodoRepoError("Failed to insert document"),
@@ -111,23 +110,26 @@ export namespace Todo {
 			});
 
 		const update = (_id: ObjectId, todo: Todo.TodoRequestDto) =>
-			Effect.tryPromise({
-				try: () =>
-					collection.updateOne({ _id }, { $set: todo }, { upsert: false }),
-				catch: (e) => new GenericTodoRepoError(e),
-			});
+			useCollection(
+				collection,
+				({ updateOne }) =>
+					updateOne({ _id }, { $set: todo }, { upsert: false }),
+				(e) => new GenericTodoRepoError(e),
+			);
 
 		const delete_ = (_id: ObjectId) =>
-			Effect.tryPromise({
-				try: () => collection.deleteOne({ _id }),
-				catch: (e) => new GenericTodoRepoError(e),
-			});
+			useCollection(
+				collection,
+				({ deleteOne }) => deleteOne({ _id }),
+				(e) => new GenericTodoRepoError(e),
+			);
 
 		const readMany = () =>
-			Effect.tryPromise({
-				try: () => collection.find({}).toArray(),
-				catch: (e) => new GenericTodoRepoError(e),
-			});
+			useCollection(
+				collection,
+				({ find }) => find({}).toArray(),
+				(e) => new GenericTodoRepoError(e),
+			);
 
 		return TodoCrudService.of({
 			create,

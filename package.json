@@ -3,6 +3,7 @@
 		"@effect/platform": "^0.59.0",
 		"@effect/platform-bun": "^0.39.0",
 		"effect": "^3.5.3",
+		"lodash": "^4.17.21",
 		"mongodb": "^6.8.0"
 	},
 	"name": "effect-todo",
@@ -11,6 +12,7 @@
 	"devDependencies": {
 		"@biomejs/biome": "^1.8.3",
 		"@types/bun": "latest",
+		"@types/lodash": "^4.17.7",
 		"typescript": "^5.5.3"
 	},
 	"trustedDependencies": ["@biomejs/biome"]
