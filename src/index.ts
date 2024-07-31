@@ -1,14 +1,14 @@
 import {
-	HttpMiddleware,
-	HttpRouter,
-	HttpServer,
-	HttpServerResponse,
+  HttpMiddleware,
+  HttpRouter,
+  HttpServer,
+  HttpServerResponse,
 } from "@effect/platform";
 import {
-	BunContext,
-	BunEtag,
-	BunHttpPlatform,
-	BunHttpServer,
+  BunContext,
+  BunEtag,
+  BunHttpPlatform,
+  BunHttpServer,
 } from "@effect/platform-bun";
 import { runMain } from "@effect/platform-bun/BunRuntime";
 import { Effect, Layer } from "effect";
@@ -18,32 +18,30 @@ import { MongoDatabaseProviderLive } from "./database/mongo-database-provider";
 import { TodoHttpLive } from "./todo/todo-http-service";
 import { Todo } from "./todo/todo-service";
 
-
 const ServerLive = Layer.mergeAll(
-	Layer.scoped(
-		HttpServer.HttpServer,
-		Effect.flatMap(ConfigService, (svc) =>
-			BunHttpServer.make({
-				port: svc.get().port,
-				development: svc.get().isDevelopment,
-			}),
-		),
-	),
-	BunHttpPlatform.layer,
-	BunEtag.layerWeak,
-	BunContext.layer,
+  Layer.scoped(
+    HttpServer.HttpServer,
+    Effect.flatMap(ConfigService, (svc) =>
+      BunHttpServer.make({
+        port: svc.get().port,
+        development: svc.get().isDevelopment,
+      }),
+    ),
+  ),
+  BunHttpPlatform.layer,
+  BunEtag.layerWeak,
+  BunContext.layer,
 );
 
 const HttpLive = HttpRouter.empty.pipe(
-	HttpRouter.get("/health", HttpServerResponse.text("OK")),
-	HttpRouter.mount("/todo", TodoHttpLive),
-	HttpServer.serve(HttpMiddleware.logger),
-	HttpServer.withLogAddress,
-	Layer.provide(ServerLive),
-	Layer.provide(Todo.TodoCrudServiceLive),
-	Layer.provide(MongoDatabaseProviderLive),
-	Layer.provide(ConfigServiceLive),
+  HttpRouter.get("/health", HttpServerResponse.text("OK")),
+  HttpRouter.mount("/todo", TodoHttpLive),
+  HttpServer.serve(HttpMiddleware.logger),
+  HttpServer.withLogAddress,
+  Layer.provide(ServerLive),
+  Layer.provide(Todo.TodoCrudServiceLive),
+  Layer.provide(MongoDatabaseProviderLive),
+  Layer.provide(ConfigServiceLive),
 );
-
 
 runMain(Layer.launch(HttpLive));
