@@ -65,7 +65,7 @@ export namespace Todo {
     readonly read: (
       _id: ObjectId,
     ) => Effect.Effect<
-      WithId<Todo.TodoModel> | null,
+      WithId<Todo.TodoModel>,
       GenericTodoRepoError | NoSuchElementException
     >;
     readonly update: (
