@@ -46,42 +46,36 @@ export const makeMongoDatabaseProviderAcq = Effect.gen(function* () {
       catch: (e) => new GenericMongoDbException(e),
     });
 
-  const useCollection = <
-    T extends Mongo.BSON.Document,
-    K,
-    E extends Error = Error,
-  >(
-    collection: Mongo.Collection<T>,
-    f: (collection: Mongo.Collection<T>) => Promise<K>,
-    onError?: (e: unknown) => E,
-  ): Effect.Effect<K, E, never> =>
-    Effect.tryPromise<K, E>({
-      try: () => f(collection),
-      catch: (e) => onError?.(e) ?? (e as E),
-    });
+  const useCollection =
+			<T extends Mongo.BSON.Document>(collection: Mongo.Collection<T>) =>
+			<K, E extends Error = Error>(
+				f: (collection: Mongo.Collection<T>) => Promise<K>,
+				onError?: (e: unknown) => E,
+			) =>
+				Effect.tryPromise<K, E>({
+					try: () => f(collection),
+					catch: (e) => onError?.(e) ?? (e as E),
+				});
 
-  return MongoDatabaseProvider.of({ use, useCollection });
+  return MongoDatabaseProvider.of({ useDb: use, useCollection });
 });
 export interface MongoDatabaseProvider {
-  readonly use: <T extends Mongo.BSON.Document>(
-    database: string,
-    collection: string,
-    options?: {
-      dbOptions?: Mongo.DbOptions;
-      collectionOptions: Mongo.CollectionOptions;
-    },
-  ) => Effect.Effect<Mongo.Collection<T>, GenericMongoDbException, never>;
+		readonly useDb: <T extends Mongo.BSON.Document>(
+			database: string,
+			collection: string,
+			options?: {
+				dbOptions?: Mongo.DbOptions;
+				collectionOptions: Mongo.CollectionOptions;
+			},
+		) => Effect.Effect<Mongo.Collection<T>, GenericMongoDbException, never>;
 
-  readonly useCollection: <
-    T extends Mongo.BSON.Document,
-    K,
-    E extends Error = Error,
-  >(
-    collection: Mongo.Collection<T>,
-    f: (coll: Mongo.Collection<T>) => Promise<K>,
-    onError?: (e: unknown) => E,
-  ) => Effect.Effect<K, E, never>;
-}
+		readonly useCollection: <T extends Mongo.BSON.Document>(
+			collection: Mongo.Collection<T>,
+		) => <K, E extends Error = Error>(
+			f: (coll: Mongo.Collection<T>) => Promise<K>,
+			onError?: (e: unknown) => E,
+		) => Effect.Effect<K, E, never>;
+	}
 
 export const MongoDatabaseProvider = Context.GenericTag<MongoDatabaseProvider>(
   "MongoDatabaseProvider",
