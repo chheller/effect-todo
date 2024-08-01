@@ -6,11 +6,8 @@ import { TaggedError } from "effect/Data";
 import * as _ from "lodash";
 import * as fp from "lodash/fp";
 import type {
-
   DeleteResult,
-
   ObjectId,
-
   UpdateResult,
   WithId,
   WithoutId,
@@ -52,7 +49,7 @@ export namespace Todo {
 
   export type TodoRequestDto = S.Schema.Type<typeof TodoRequestDto>;
   export type TodoResponseDto = S.Schema.Type<typeof TodoResponseDto>;
-  
+
   export type TodoModel = {
     description: string;
     done: boolean;
@@ -116,7 +113,6 @@ export namespace Todo {
       useTodos(({ deleteOne }) => deleteOne({ _id }));
 
     const readMany = () => useTodos(({ find }) => find({}).toArray());
-
 
     return TodoRepository.of({
       create,
