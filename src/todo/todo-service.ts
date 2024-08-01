@@ -6,18 +6,21 @@ import { TaggedError } from "effect/Data";
 import * as _ from "lodash";
 import * as fp from "lodash/fp";
 import type {
-  BSON,
-  Collection,
+
   DeleteResult,
-  InsertOneResult,
+
   ObjectId,
-  OptionalId,
+
   UpdateResult,
   WithId,
   WithoutId,
 } from "mongodb";
-import { MongoDatabaseProvider } from "../database/mongo-database-provider";
+import {
+  type GenericMongoDbException,
+  MongoDatabaseProvider,
+} from "../database/mongo-database-provider";
 import { NoSuchElementException } from "effect/Cause";
+
 export namespace Todo {
   export class GenericTodoRepoError extends Error {
     _tag = "GenericTodoRepoError" as const;
@@ -49,82 +52,70 @@ export namespace Todo {
 
   export type TodoRequestDto = S.Schema.Type<typeof TodoRequestDto>;
   export type TodoResponseDto = S.Schema.Type<typeof TodoResponseDto>;
+  
   export type TodoModel = {
     description: string;
     done: boolean;
     id: ObjectId;
   };
 
-  export interface TodoCrudService {
+  export interface TodoRepository {
     readonly create: (
       todo: Todo.TodoRequestDto,
     ) => Effect.Effect<
       Todo.TodoModel,
-      GenericTodoRepoError | NoSuchElementException
+      GenericMongoDbException | NoSuchElementException
     >;
     readonly read: (
       _id: ObjectId,
     ) => Effect.Effect<
-      WithId<Todo.TodoModel> | null,
-      GenericTodoRepoError | NoSuchElementException
+      WithId<Todo.TodoModel>,
+      GenericMongoDbException | NoSuchElementException
     >;
     readonly update: (
       _id: ObjectId,
       todo: Todo.TodoRequestDto,
-    ) => Effect.Effect<UpdateResult<Todo.TodoModel>, GenericTodoRepoError>;
+    ) => Effect.Effect<UpdateResult<Todo.TodoModel>, GenericMongoDbException>;
+
     readonly delete: (
       _id: ObjectId,
-    ) => Effect.Effect<DeleteResult, GenericTodoRepoError>;
+    ) => Effect.Effect<DeleteResult, GenericMongoDbException>;
     readonly readMany: () => Effect.Effect<
       Todo.TodoModel[],
-      GenericTodoRepoError
+      GenericMongoDbException
     >;
   }
 
   export const TodoCrudService =
-    Context.GenericTag<TodoCrudService>("TodoCrudService");
+    Context.GenericTag<TodoRepository>("TodoCrudService");
 
-  export const makeTodoCrudService = Effect.gen(function* () {
+  export const makeTodoCrudRepository = Effect.gen(function* () {
     const { useDb, useCollection } = yield* MongoDatabaseProvider;
     const collection = yield* useDb<TodoModel>("effect", "todos");
     const useTodos = useCollection(collection);
+
     const read = (_id: ObjectId) =>
       Effect.filterOrFail(
-        useTodos(
-          ({ findOne }) => findOne({ _id }),
-          (e) => new GenericTodoRepoError(e),
-        ),
+        useTodos(({ findOne }) => findOne({ _id })),
         Predicate.isNotNull,
         () => new NoSuchElementException("Failed to fetch inserted document"),
       );
 
     const create = (todo: Todo.TodoRequestDto) =>
-      useTodos(
-        ({ insertOne }) => insertOne(todo as WithoutId<TodoModel>),
-        (e) => new GenericTodoRepoError(e),
-      ).pipe(
+      useTodos(({ insertOne }) => insertOne(todo as WithoutId<TodoModel>)).pipe(
         Effect.map((_) => _.insertedId),
         Effect.flatMap(read),
       );
 
     const update = (_id: ObjectId, todo: Todo.TodoRequestDto) =>
-      useTodos(
-        ({ updateOne }) =>
-          updateOne({ _id }, { $set: todo }, { upsert: false }),
-        (e) => new GenericTodoRepoError(e),
+      useTodos(({ updateOne }) =>
+        updateOne({ _id }, { $set: todo }, { upsert: false }),
       );
 
     const delete_ = (_id: ObjectId) =>
-      useTodos(
-        ({ deleteOne }) => deleteOne({ _id }),
-        (e) => new GenericTodoRepoError(e),
-      );
+      useTodos(({ deleteOne }) => deleteOne({ _id }));
 
-    const readMany = () =>
-      useTodos(
-        ({ find }) => find({}).toArray(),
-        (e) => new GenericTodoRepoError(e),
-      );
+    const readMany = () => useTodos(({ find }) => find({}).toArray());
 
     return TodoCrudService.of({
       create,
@@ -137,6 +128,6 @@ export namespace Todo {
 
   export const TodoCrudServiceLive = Layer.scoped(
     TodoCrudService,
-    makeTodoCrudService,
+    makeTodoCrudRepository,
   );
 }
