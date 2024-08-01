@@ -86,8 +86,8 @@ export namespace Todo {
     >;
   }
 
-  export const TodoCrudService =
-    Context.GenericTag<TodoRepository>("TodoCrudService");
+  export const TodoRepository =
+    Context.GenericTag<TodoRepository>("TodoRepository");
 
   export const makeTodoCrudRepository = Effect.gen(function* () {
     const { useDb, useCollection } = yield* MongoDatabaseProvider;
@@ -117,7 +117,8 @@ export namespace Todo {
 
     const readMany = () => useTodos(({ find }) => find({}).toArray());
 
-    return TodoCrudService.of({
+
+    return TodoRepository.of({
       create,
       read,
       update,
@@ -126,8 +127,8 @@ export namespace Todo {
     });
   });
 
-  export const TodoCrudServiceLive = Layer.scoped(
-    TodoCrudService,
+  export const TodoRepositoryLive = Layer.scoped(
+    TodoRepository,
     makeTodoCrudRepository,
   );
 }

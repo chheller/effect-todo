@@ -16,7 +16,7 @@ import { Effect, Layer } from "effect";
 import { ConfigService, ConfigServiceLive } from "./config-service";
 import { MongoDatabaseProviderLive } from "./database/mongo-database-provider";
 import { TodoHttpLive } from "./todo/todo-http-service";
-import { Todo } from "./todo/todo-service";
+import { Todo } from "./todo/todo-repository";
 
 const ServerLive = Layer.mergeAll(
   Layer.scoped(
@@ -39,7 +39,7 @@ const HttpLive = HttpRouter.empty.pipe(
   HttpServer.serve(HttpMiddleware.logger),
   HttpServer.withLogAddress,
   Layer.provide(ServerLive),
-  Layer.provide(Todo.TodoCrudServiceLive),
+  Layer.provide(Todo.TodoRepositoryLive),
   Layer.provide(MongoDatabaseProviderLive),
   Layer.provide(ConfigServiceLive),
 );

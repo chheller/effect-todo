@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "dev": "bun run --bun --watch src/index.ts"
+  },
   "dependencies": {
     "@effect/platform": "^0.59.0",
     "@effect/platform-bun": "^0.39.0",
