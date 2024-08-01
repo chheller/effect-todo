@@ -15,7 +15,7 @@
   "type": "module",
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
-    "@types/bun": "latest",
+    "@types/bun": "^1.1.6",
     "@types/lodash": "^4.17.7",
     "typescript": "^5.5.4"
   },

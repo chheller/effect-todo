@@ -1,10 +1,6 @@
-import { TypeIdError } from "@effect/platform/Error";
 import { Schema as S } from "@effect/schema";
-import { Brand, Context, Effect, Layer, Predicate } from "effect";
-import { error } from "effect/Console";
-import { TaggedError } from "effect/Data";
-import * as _ from "lodash";
-import * as fp from "lodash/fp";
+import { Context, Effect, Layer, Predicate } from "effect";
+import { NoSuchElementException } from "effect/Cause";
 import type {
   DeleteResult,
   ObjectId,
@@ -16,7 +12,6 @@ import {
   type GenericMongoDbException,
   MongoDatabaseProvider,
 } from "../database/mongo-database-provider";
-import { NoSuchElementException } from "effect/Cause";
 
 export namespace Todo {
   export class GenericTodoRepoError extends Error {
@@ -87,32 +82,32 @@ export namespace Todo {
     Context.GenericTag<TodoRepository>("TodoRepository");
 
   export const makeTodoCrudRepository = Effect.gen(function* () {
-    const { useDb, useCollection } = yield* MongoDatabaseProvider;
-    const collection = yield* useDb<TodoModel>("effect", "todos");
-    const useTodos = useCollection(collection);
+    const mongoDatabaseProvider = yield* MongoDatabaseProvider;
+    const collection = yield* mongoDatabaseProvider.useDb<TodoModel>(
+      "effect",
+      "todos",
+    );
+    const useTodos = mongoDatabaseProvider.useCollection(collection);
 
     const read = (_id: ObjectId) =>
       Effect.filterOrFail(
-        useTodos(({ findOne }) => findOne({ _id })),
+        useTodos((_) => _.findOne({ _id })),
         Predicate.isNotNull,
         () => new NoSuchElementException("Failed to fetch inserted document"),
       );
 
     const create = (todo: Todo.TodoRequestDto) =>
-      useTodos(({ insertOne }) => insertOne(todo as WithoutId<TodoModel>)).pipe(
+      useTodos((_) => _.insertOne(todo as WithoutId<TodoModel>)).pipe(
         Effect.map((_) => _.insertedId),
         Effect.flatMap(read),
       );
 
     const update = (_id: ObjectId, todo: Todo.TodoRequestDto) =>
-      useTodos(({ updateOne }) =>
-        updateOne({ _id }, { $set: todo }, { upsert: false }),
-      );
+      useTodos((_) => _.updateOne({ _id }, { $set: todo }, { upsert: false }));
 
-    const delete_ = (_id: ObjectId) =>
-      useTodos(({ deleteOne }) => deleteOne({ _id }));
+    const delete_ = (_id: ObjectId) => useTodos((_) => _.deleteOne({ _id }));
 
-    const readMany = () => useTodos(({ find }) => find({}).toArray());
+    const readMany = () => useTodos((_) => _.find({}).toArray());
 
     return TodoRepository.of({
       create,

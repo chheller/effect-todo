@@ -10,5 +10,12 @@ export namespace HttpErrorHandlers {
     );
 
   export const handleInternalServerError = <E extends Error>(e: E) =>
-    HttpServerResponse.unsafeJson({ error: e.message }, { status: 500 });
+    Effect.gen(function* () {
+      yield* Effect.logError(`Internal server error: ${e.message}`, e.cause);
+      return HttpServerResponse.unsafeJson(
+        { error: e.message },
+        { status: 500 },
+      );
+    });
+  
 }

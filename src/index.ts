@@ -11,7 +11,7 @@ import {
   BunHttpServer,
 } from "@effect/platform-bun";
 import { runMain } from "@effect/platform-bun/BunRuntime";
-import { Effect, Layer } from "effect";
+import { Effect, Layer, Logger } from "effect";
 
 import { ConfigService, ConfigServiceLive } from "./config-service";
 import { MongoDatabaseProviderLive } from "./database/mongo-database-provider";
@@ -43,6 +43,7 @@ const HttpLive = HttpRouter.empty.pipe(
   Layer.provide(Todo.TodoRepositoryLive),
   Layer.provide(MongoDatabaseProviderLive),
   Layer.provide(ConfigServiceLive),
+  Layer.provide(Logger.pretty),
 );
 
 runMain(Layer.launch(HttpLive));
