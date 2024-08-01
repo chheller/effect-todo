@@ -65,10 +65,4 @@ export const TodoHttpLive = HttpRouter.empty.pipe(
   HttpRouter.post("/", createTodoHandler),
   HttpRouter.patch("/:id", updateTodoHandler),
   HttpRouter.del("/:id", deleteTodoHandler),
-
-  Effect.catchTags({
-    ParseError: HttpErrorHandlers.handleParseError,
-  }),
-
-  Effect.catchAll(HttpErrorHandlers.handleInternalServerError),
 );

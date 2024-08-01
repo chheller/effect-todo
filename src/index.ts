@@ -17,6 +17,7 @@ import { ConfigService, ConfigServiceLive } from "./config-service";
 import { MongoDatabaseProviderLive } from "./database/mongo-database-provider";
 import { TodoHttpLive } from "./todo/todo-http-service";
 import { Todo } from "./todo/todo-repository";
+import { router } from "./router";
 
 const ServerLive = Layer.mergeAll(
   Layer.scoped(
@@ -35,7 +36,7 @@ const ServerLive = Layer.mergeAll(
 
 const HttpLive = HttpRouter.empty.pipe(
   HttpRouter.get("/health", HttpServerResponse.text("OK")),
-  HttpRouter.mount("/todo", TodoHttpLive),
+  HttpRouter.mount("/", router),
   HttpServer.serve(HttpMiddleware.logger),
   HttpServer.withLogAddress,
   Layer.provide(ServerLive),
