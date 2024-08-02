@@ -9,8 +9,9 @@ import type {
   WithoutId,
 } from "mongodb";
 import {
+  MongoDatabaseReaderProvider,
+  MongoDatabaseWriterProvider,
   type GenericMongoDbException,
-  MongoDatabaseProvider,
 } from "../database/mongo-database-provider";
 import * as lodash from "lodash";
 export namespace Todo {
@@ -51,19 +52,26 @@ export namespace Todo {
     id: ObjectId;
   };
 
-  export interface TodoRepository {
-    readonly create: (
-      todo: Todo.TodoRequestDto,
-    ) => Effect.Effect<
-      Todo.TodoModel,
-      GenericMongoDbException | NoSuchElementException
-    >;
+  export interface TodoQueryRepository {
     readonly read: (
       _id: ObjectId,
     ) => Effect.Effect<
       WithId<Todo.TodoModel>,
       GenericMongoDbException | NoSuchElementException
     >;
+    readonly readMany: () => Effect.Effect<
+      Todo.TodoModel[],
+      GenericMongoDbException
+    >;
+  }
+  export interface TodoCommandRepository {
+    readonly create: (
+      todo: Todo.TodoRequestDto,
+    ) => Effect.Effect<
+      Todo.TodoModel,
+      GenericMongoDbException | NoSuchElementException
+    >;
+
     readonly update: (
       _id: ObjectId,
       todo: Todo.TodoRequestDto,
@@ -72,23 +80,25 @@ export namespace Todo {
     readonly delete: (
       _id: ObjectId,
     ) => Effect.Effect<DeleteResult, GenericMongoDbException>;
-    readonly readMany: () => Effect.Effect<
-      Todo.TodoModel[],
-      GenericMongoDbException
-    >;
   }
 
-  export const TodoRepository =
-    Context.GenericTag<TodoRepository>("TodoRepository");
+  export const TodoQueryRepository =
+    Context.GenericTag<TodoQueryRepository>("TodoQueryRepositry");
+  export const TodoCommandRepository =
+    Context.GenericTag<TodoCommandRepository>("TodoWriteRepository");
 
-  export const makeTodoCrudRepository = Effect.gen(function* () {
-    const mongoDatabaseProvider = yield* MongoDatabaseProvider;
+  export const makeTodoQueryRepository = Effect.gen(function* () {
+    const mongoDatabaseProvider = yield* MongoDatabaseReaderProvider;
     const collection = yield* mongoDatabaseProvider.useDb<TodoModel>(
       "effect",
       "todos",
     );
     const useTodos = mongoDatabaseProvider.useCollection(collection);
 
+    const readMany = () =>
+      useTodos((_) => _.find({}).toArray()).pipe(
+        Effect.withSpan("todo-read-many"),
+      );
     const read = (_id: ObjectId) =>
       Effect.filterOrFail(
         useTodos((_) => _.findOne({ _id })),
@@ -96,10 +106,25 @@ export namespace Todo {
         () => new NoSuchElementException("Failed to fetch inserted document"),
       ).pipe(Effect.withSpan("todo-read"));
 
+    return TodoQueryRepository.of({
+      read,
+      readMany,
+    });
+  });
+
+  export const makeTodoCommandRepository = Effect.gen(function* () {
+    const queryRepository = yield* TodoQueryRepository;
+    const mongoDatabaseProvider = yield* MongoDatabaseWriterProvider;
+    const collection = yield* mongoDatabaseProvider.useDb<TodoModel>(
+      "effect",
+      "todos",
+    );
+    const useTodos = mongoDatabaseProvider.useCollection(collection);
+
     const create = (todo: Todo.TodoRequestDto) =>
       useTodos((_) => _.insertOne(todo as WithoutId<TodoModel>)).pipe(
         Effect.map((_) => _.insertedId),
-        Effect.flatMap(read),
+        Effect.flatMap(queryRepository.read),
         Effect.withSpan("todo-create"),
       );
 
@@ -111,22 +136,21 @@ export namespace Todo {
         Effect.withSpan("todo-delete"),
       );
 
-    const readMany = () =>
-      useTodos((_) => _.find({}).toArray()).pipe(
-        Effect.withSpan("todo-read-many"),
-      );
-
-    return TodoRepository.of({
+    return TodoCommandRepository.of({
       create,
-      read,
       update,
       delete: delete_,
-      readMany,
     });
   });
 
-  export const TodoRepositoryLive = Layer.scoped(
-    TodoRepository,
-    makeTodoCrudRepository,
+  export const TodoCommandRepositoryLive = Layer.scoped(
+    TodoCommandRepository,
+    makeTodoCommandRepository,
   );
+
+  export const TodoQueryRepositoryLive = Layer.scoped(
+    TodoQueryRepository,
+    makeTodoQueryRepository,
+  );
+  
 }

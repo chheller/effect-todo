@@ -178,3 +178,4 @@ dist
 
 # Custom
 docker/tempo-data
+docker/mongo
