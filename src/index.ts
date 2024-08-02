@@ -11,26 +11,20 @@ import {
   BunHttpServer,
 } from "@effect/platform-bun";
 import { runMain } from "@effect/platform-bun/BunRuntime";
-import { Console, Effect, Layer, Logger } from "effect";
+import { Effect, Layer, Logger } from "effect";
 
-import { TodoHttpLive } from "./todo/todo-http-service";
-import { Todo } from "./todo/todo-repository";
-import { router } from "./router";
 import { NodeSdk } from "@effect/opentelemetry";
-import {
-  BatchSpanProcessor,
-  ConsoleSpanExporter,
-} from "@opentelemetry/sdk-trace-base";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
-import {
-  MongoReaderConfigLive,
-  MongoWriterConfigLive,
-} from "./config/mongo-config";
+import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { ServerConfigLive } from "./config/server-config";
 import {
   MongoReaderProviderLive,
   MongoWriterProviderLive,
 } from "./database/mongo-database-provider";
+import { router } from "./router";
+import { TodoCommandRepositoryLive } from "./todo/repository/todo-command-repository";
+import { TodoQueryRepositoryLive } from "./todo/repository/todo-query-repository";
+
 
 const ServerLive = Layer.mergeAll(
   Layer.scoped(
@@ -60,8 +54,8 @@ const HttpLive = HttpRouter.empty.pipe(
   HttpServer.serve(HttpMiddleware.logger),
   HttpServer.withLogAddress,
   Layer.provide(ServerLive),
-  Layer.provide(Todo.TodoCommandRepositoryLive),
-  Layer.provide(Todo.TodoQueryRepositoryLive),
+  Layer.provide(TodoCommandRepositoryLive),
+  Layer.provide(TodoQueryRepositoryLive),
   Layer.provide(MongoReaderProviderLive),
   Layer.provide(MongoWriterProviderLive),
   Layer.provide(Logger.pretty),
