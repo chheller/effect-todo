@@ -14,6 +14,14 @@ export class GenericMongoDbException extends Error {
   }
 }
 
+//
+/**
+ * Method for making a MongoDatabaseProvider service
+ * In order to easily enable CQRS, we parameterize the MongoDatabaseProvider over a Config, which can contain a read-only user
+ * Additionally, this can be used to easily create new instances of the MongoDatabaseProvider for different databases
+ * @param config
+ * @returns
+ */
 export const makeMongoDatabaseProviderAcq = (config: MongoConfig) =>
   Effect.gen(function* () {
     // Acquire a releasable handle on the MongoClient, and specify cleanup behavior for the client
@@ -69,6 +77,13 @@ export const makeMongoDatabaseProviderAcq = (config: MongoConfig) =>
   });
 
 export interface MongoDatabaseProvider {
+  /**
+   * Method to create a hook to a particular database and collection
+   * @param database The name of the database to use
+   * @param collection The name of the collection to use for this provider
+   * @param options Combined options
+   * @returns
+   */
   readonly useDb: <T extends Mongo.BSON.Document>(
     database: string,
     collection: string,
@@ -101,6 +116,9 @@ interface UseCollectionCallback<T extends Mongo.BSON.Document> {
   ): Effect.Effect<K, E, never>;
 }
 
+/**
+ * Create Providers for CQRS operations, by splitting read and write operations between two separate providers
+ */
 export const MongoDatabaseReaderProvider =
   Context.GenericTag<MongoDatabaseProvider>("MongoDatabaseReaderProvider");
 

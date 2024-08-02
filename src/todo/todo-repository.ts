@@ -52,6 +52,9 @@ export namespace Todo {
     id: ObjectId;
   };
 
+  /**
+   * Implement CRQS pattern for Todo by splitting the repository into two parts
+   */
   export interface TodoQueryRepository {
     readonly read: (
       _id: ObjectId,
@@ -87,6 +90,9 @@ export namespace Todo {
   export const TodoCommandRepository =
     Context.GenericTag<TodoCommandRepository>("TodoWriteRepository");
 
+  /**
+   * Effect for creating the TodoQueryRepository
+   */
   export const makeTodoQueryRepository = Effect.gen(function* () {
     const mongoDatabaseProvider = yield* MongoDatabaseReaderProvider;
     const collection = yield* mongoDatabaseProvider.useDb<TodoModel>(
@@ -111,7 +117,9 @@ export namespace Todo {
       readMany,
     });
   });
-
+  /**
+   * Effect for creating the TodoCommandRepository
+   */
   export const makeTodoCommandRepository = Effect.gen(function* () {
     const queryRepository = yield* TodoQueryRepository;
     const mongoDatabaseProvider = yield* MongoDatabaseWriterProvider;
