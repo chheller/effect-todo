@@ -12,7 +12,7 @@ import {
   type GenericMongoDbException,
   MongoDatabaseProvider,
 } from "../database/mongo-database-provider";
-
+import * as lodash from "lodash";
 export namespace Todo {
   export class GenericTodoRepoError extends Error {
     _tag = "GenericTodoRepoError" as const;
@@ -94,20 +94,27 @@ export namespace Todo {
         useTodos((_) => _.findOne({ _id })),
         Predicate.isNotNull,
         () => new NoSuchElementException("Failed to fetch inserted document"),
-      );
+      ).pipe(Effect.withSpan("todo-read"));
 
     const create = (todo: Todo.TodoRequestDto) =>
       useTodos((_) => _.insertOne(todo as WithoutId<TodoModel>)).pipe(
         Effect.map((_) => _.insertedId),
         Effect.flatMap(read),
+        Effect.withSpan("todo-create"),
       );
 
     const update = (_id: ObjectId, todo: Todo.TodoRequestDto) =>
       useTodos((_) => _.updateOne({ _id }, { $set: todo }, { upsert: false }));
 
-    const delete_ = (_id: ObjectId) => useTodos((_) => _.deleteOne({ _id }));
+    const delete_ = (_id: ObjectId) =>
+      useTodos((_) => _.deleteOne({ _id })).pipe(
+        Effect.withSpan("todo-delete"),
+      );
 
-    const readMany = () => useTodos((_) => _.find({}).toArray());
+    const readMany = () =>
+      useTodos((_) => _.find({}).toArray()).pipe(
+        Effect.withSpan("todo-read-many"),
+      );
 
     return TodoRepository.of({
       create,

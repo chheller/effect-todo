@@ -18,6 +18,12 @@ import { MongoDatabaseProviderLive } from "./database/mongo-database-provider";
 import { TodoHttpLive } from "./todo/todo-http-service";
 import { Todo } from "./todo/todo-repository";
 import { router } from "./router";
+import { NodeSdk } from "@effect/opentelemetry";
+import {
+  BatchSpanProcessor,
+  ConsoleSpanExporter,
+} from "@opentelemetry/sdk-trace-base";
+import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 
 const ServerLive = Layer.mergeAll(
   Layer.scoped(
@@ -34,6 +40,12 @@ const ServerLive = Layer.mergeAll(
   BunContext.layer,
 );
 
+const NodeSdkLive = NodeSdk.layer(() => ({
+  resource: { serviceName: "effect-todo-http-api" },
+  spanProcessor: new BatchSpanProcessor(new OTLPTraceExporter()),
+}))
+ 
+
 const HttpLive = HttpRouter.empty.pipe(
   HttpRouter.get("/health", HttpServerResponse.text("OK")),
   HttpRouter.mount("/", router),
@@ -44,6 +56,9 @@ const HttpLive = HttpRouter.empty.pipe(
   Layer.provide(MongoDatabaseProviderLive),
   Layer.provide(ConfigServiceLive),
   Layer.provide(Logger.pretty),
+  Layer.provide(NodeSdkLive),
 );
+
+ 
 
 runMain(Layer.launch(HttpLive));

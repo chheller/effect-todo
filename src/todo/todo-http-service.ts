@@ -17,13 +17,13 @@ const getTodoByIdHandler = Effect.gen(function* () {
   return result === null
     ? HttpServerResponse.empty({ status: 404 })
     : HttpServerResponse.unsafeJson(result);
-});
+}).pipe(Effect.withSpan("getTodoByIdHandler"));
 
 const getAllTodosHandler = Effect.gen(function* () {
   const svc = yield* Todo.TodoRepository;
   const result = yield* svc.readMany();
   return yield* HttpServerResponse.unsafeJson(result);
-});
+}).pipe(Effect.withSpan("getAllTodosHandler"));
 
 const createTodoHandler = Effect.gen(function* () {
   const svc = yield* Todo.TodoRepository;
@@ -32,7 +32,7 @@ const createTodoHandler = Effect.gen(function* () {
   const dto = yield* Schema.decodeUnknown(Todo.TodoRequestDto)(body);
   const result = yield* svc.create(dto);
   return HttpServerResponse.unsafeJson(result);
-});
+}).pipe(Effect.withSpan("createTodoHandler"));
 
 const updateTodoHandler = Effect.gen(function* () {
   const svc = yield* Todo.TodoRepository;
@@ -46,7 +46,7 @@ const updateTodoHandler = Effect.gen(function* () {
   return result.matchedCount === 0
     ? HttpServerResponse.empty({ status: 404 })
     : HttpServerResponse.unsafeJson(result);
-});
+}).pipe(Effect.withSpan("updateTodoHandler"));
 
 const deleteTodoHandler = Effect.gen(function* () {
   const svc = yield* Todo.TodoRepository;
@@ -56,8 +56,7 @@ const deleteTodoHandler = Effect.gen(function* () {
   return result.deletedCount === 0
     ? HttpServerResponse.empty({ status: 404 })
     : HttpServerResponse.empty({ status: 204 });
-});
-
+}).pipe(Effect.withSpan("deleteTodoHandler"));
 
 export const TodoHttpLive = HttpRouter.empty.pipe(
   HttpRouter.get("/", getAllTodosHandler),
