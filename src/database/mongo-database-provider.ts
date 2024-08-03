@@ -1,10 +1,6 @@
 import { Context, Effect, Layer, Redacted } from "effect";
 import * as Mongo from "mongodb";
-import {
-  MongoReaderConfigLive,
-  MongoWriterConfigLive,
-  type MongoConfig,
-} from "../config/mongo-config";
+import { makeMongoConfig, type MongoConfig } from "../config/mongo-config";
 export class GenericMongoDbException extends Error {
   _tag = "GenericMongoDbException" as const;
   public constructor(e: unknown) {
@@ -127,14 +123,14 @@ export const MongoDatabaseWriterProvider =
 
 export const MongoReaderProviderLive = Layer.scoped(
   MongoDatabaseReaderProvider,
-  Effect.flatMap(MongoReaderConfigLive, (config) =>
+  Effect.flatMap(makeMongoConfig("MONGO_READER"), (config) =>
     makeMongoDatabaseProviderAcq(config),
   ).pipe(Effect.andThen(MongoDatabaseReaderProvider.of)),
 );
 
 export const MongoWriterProviderLive = Layer.scoped(
   MongoDatabaseWriterProvider,
-  Effect.flatMap(MongoWriterConfigLive, (config) =>
+  Effect.flatMap(makeMongoConfig("MONGO_WRITER"), (config) =>
     makeMongoDatabaseProviderAcq(config),
   ).pipe(Effect.andThen(MongoDatabaseWriterProvider.of)),
 );

@@ -12,25 +12,19 @@ function MongoConfig([user, pwd, host, port, database]: [
   return { getMongoUri, user, pwd, host, port };
 }
 
-const mongoServerConfig = Config.all([
+
+const mongoUserConfig = Config.all([
+  Config.string("USER"),
+  Config.redacted("PWD"),
   Config.string("HOST").pipe(Config.withDefault("localhost")),
   Config.number("PORT").pipe(Config.withDefault(27017)),
   Config.string("DATABASE").pipe(Config.withDefault("effect")),
 ]);
 
-const mongoUserConfig = Config.all([
-  Config.string("USER"),
-  Config.redacted("PWD"),
-]);
+export const makeMongoConfig: (
+  mongoSvcName: string,
+) => Config.Config<MongoConfig> = (mongoSvcName: string) =>
+  Config.map(Config.nested(mongoUserConfig, mongoSvcName), MongoConfig);
 
-export const MongoReaderConfigLive: Config.Config<MongoConfig> = Config.map(
-  Config.zip(Config.nested(mongoUserConfig, "MONGO_READER"), mongoServerConfig),
-  (configs) => MongoConfig([...configs[0], ...configs[1]]),
-);
-
-export const MongoWriterConfigLive: Config.Config<MongoConfig> = Config.map(
-  Config.zip(Config.nested(mongoUserConfig, "MONGO_WRITER"), mongoServerConfig),
-  (configs) => MongoConfig([...configs[0], ...configs[1]]),
-);
 
 export type MongoConfig = ReturnType<typeof MongoConfig>;
