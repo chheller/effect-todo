@@ -1,7 +1,7 @@
 {
   "scripts": {
-    "dev": "bun run --bun --watch src/index.ts",
-    "compose": "docker compose up -d"
+    "up": "docker compose up -d",
+    "down": "docker compose down"
   },
   "dependencies": {
     "@effect/opentelemetry": "^0.35.0",
