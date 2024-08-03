@@ -16,7 +16,7 @@ function MongoConfig([user, pwd, host, port, database]: [
 const mongoUserConfig = Config.all([
   Config.string("USER"),
   Config.redacted("PWD"),
-  Config.string("HOST").pipe(Config.withDefault("host.docker.internal")),
+  Config.string("HOST").pipe(Config.withDefault("localhost")),
   Config.number("PORT").pipe(Config.withDefault(27017)),
   Config.string("DATABASE").pipe(Config.withDefault("effect")),
 ]);

@@ -1,5 +1,6 @@
 {
   "scripts": {
+    "dev": "bun run --bun --watch src/index.ts",
     "up": "docker compose up -d",
     "down": "docker compose down"
   },

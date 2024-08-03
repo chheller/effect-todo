@@ -1,15 +1,28 @@
 # effect-todo
 
-To install dependencies:
+A repository to test out the functionalities and design patterns of [@EffectTS](https://effect.website)
 
+Techniques explored
+- Dynamic Configurations
+- Multiple database connections
+- CQRS
+- Open Telemetry logging
+
+# Get Started
+
+1. Install dependencies
 ```bash
 bun install
 ```
 
-To run:
-
+2. Bring services up
 ```bash
-bun run index.ts
+bun up
+bun dev
 ```
 
-This project was created using `bun init` in bun v1.1.20. [Bun](https://bun.sh) is a fast all-in-one JavaScript runtime.
+3. Test the API
+Use Bruno, and open the requests under [bruno-api-requests](./bruno-api-requests/) 
+
+4. Observe the services
+Navigate to [localhost:3000](http://localhost:3000) to bring up the Open Telemetry page. After sending some requests, they should show up in Tempo
