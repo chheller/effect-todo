@@ -1,17 +1,16 @@
 import {
   HttpRouter,
-  HttpServerRequest,
   HttpServerResponse,
+  HttpServerRequest,
 } from "@effect/platform";
-import { Schema } from "@effect/schema";
 import { Effect } from "effect";
-import { HttpErrorHandlers } from "../http/error-handler";
 import { ObjectId } from "mongodb";
 import { TodoCommandRepository } from "./repository/todo-command-repository";
 import { TodoQueryRepository } from "./repository/todo-query-repository";
 import { TodoId, TodoRequestDto } from "./todo-domain";
+import { Schema } from "@effect/schema";
 
-const getTodoByIdHandler = Effect.gen(function* () {
+export const getTodoByIdHandler = Effect.gen(function* () {
   const params = yield* HttpRouter.params;
   const id = yield* Schema.decodeUnknown(TodoId)(params.id);
   const svc = yield* TodoQueryRepository;
@@ -21,13 +20,13 @@ const getTodoByIdHandler = Effect.gen(function* () {
     : HttpServerResponse.unsafeJson(result);
 }).pipe(Effect.withSpan("getTodoByIdHandler"));
 
-const getAllTodosHandler = Effect.gen(function* () {
+export const getAllTodosHandler = Effect.gen(function* () {
   const svc = yield* TodoQueryRepository;
   const result = yield* svc.readMany();
   return yield* HttpServerResponse.unsafeJson(result);
 }).pipe(Effect.withSpan("getAllTodosHandler"));
 
-const createTodoHandler = Effect.gen(function* () {
+export const createTodoHandler = Effect.gen(function* () {
   const svc = yield* TodoCommandRepository;
   const request = yield* HttpServerRequest.HttpServerRequest;
   const body = yield* request.json;
@@ -36,7 +35,7 @@ const createTodoHandler = Effect.gen(function* () {
   return HttpServerResponse.unsafeJson(result);
 }).pipe(Effect.withSpan("createTodoHandler"));
 
-const updateTodoHandler = Effect.gen(function* () {
+export const updateTodoHandler = Effect.gen(function* () {
   const svc = yield* TodoCommandRepository;
   const request = yield* HttpServerRequest.HttpServerRequest;
   const body = yield* request.json;
@@ -50,7 +49,7 @@ const updateTodoHandler = Effect.gen(function* () {
     : HttpServerResponse.unsafeJson(result);
 }).pipe(Effect.withSpan("updateTodoHandler"));
 
-const deleteTodoHandler = Effect.gen(function* () {
+export const deleteTodoHandler = Effect.gen(function* () {
   const svc = yield* TodoCommandRepository;
   const params = yield* HttpRouter.params;
   const id = yield* Schema.decodeUnknown(TodoId)(params.id);
@@ -59,11 +58,3 @@ const deleteTodoHandler = Effect.gen(function* () {
     ? HttpServerResponse.empty({ status: 404 })
     : HttpServerResponse.empty({ status: 204 });
 }).pipe(Effect.withSpan("deleteTodoHandler"));
-
-export const TodoHttpLive = HttpRouter.empty.pipe(
-  HttpRouter.get("/", getAllTodosHandler),
-  HttpRouter.get("/:id", getTodoByIdHandler),
-  HttpRouter.post("/", createTodoHandler),
-  HttpRouter.patch("/:id", updateTodoHandler),
-  HttpRouter.del("/:id", deleteTodoHandler),
-);

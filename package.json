@@ -2,7 +2,8 @@
   "scripts": {
     "dev": "bun run --bun --watch src/index.ts",
     "up": "docker compose up -d",
-    "down": "docker compose down"
+    "down": "docker compose down",
+    "test": "bun --node vitest"
   },
   "dependencies": {
     "@effect/opentelemetry": "^0.35.0",
@@ -13,7 +14,6 @@
     "@opentelemetry/sdk-trace-base": "^1.25.1",
     "@opentelemetry/sdk-trace-node": "^1.25.1",
     "@opentelemetry/sdk-trace-web": "^1.25.1",
-    "@types/mongodb": "^4.0.7",
     "effect": "^3.5.3",
     "lodash": "^4.17.21",
     "mongodb": "^6.8.0"
@@ -23,9 +23,12 @@
   "type": "module",
   "devDependencies": {
     "@biomejs/biome": "^1.8.3",
+    "@effect/vitest": "^0.8.0",
     "@types/bun": "^1.1.6",
+    "@types/mongodb": "^4.0.7",
     "@types/lodash": "^4.17.7",
-    "typescript": "^5.5.4"
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.5"
   },
   "trustedDependencies": ["@biomejs/biome"]
 }

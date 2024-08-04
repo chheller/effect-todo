@@ -4,7 +4,7 @@ import type { ObjectId, WithId } from "mongodb";
 import {
   type GenericMongoDbException,
   MongoDatabaseReaderProvider,
-} from "../../database/mongo-database-provider";
+} from "../../../database/mongo-database-provider";
 import type { TodoModel } from "../todo-domain";
 
 export interface TodoQueryRepository {

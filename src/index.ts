@@ -22,8 +22,8 @@ import {
   MongoWriterProviderLive,
 } from "./database/mongo-database-provider";
 import { router } from "./router";
-import { TodoCommandRepositoryLive } from "./todo/repository/todo-command-repository";
-import { TodoQueryRepositoryLive } from "./todo/repository/todo-query-repository";
+import { TodoCommandRepositoryLive } from "./todo/internal/repository/todo-command-repository";
+import { TodoQueryRepositoryLive } from "./todo/internal/repository/todo-query-repository";
 
 
 const ServerLive = Layer.mergeAll(
