@@ -15,9 +15,7 @@ export const getTodoByIdHandler = Effect.gen(function* () {
   const id = yield* Schema.decodeUnknown(TodoId)(params.id);
   const svc = yield* TodoQueryRepository;
   const result = yield* svc.read(ObjectId.createFromHexString(id));
-  return result === null
-    ? HttpServerResponse.empty({ status: 404 })
-    : HttpServerResponse.unsafeJson(result);
+  return HttpServerResponse.unsafeJson(result);
 }).pipe(Effect.withSpan("getTodoByIdHandler"));
 
 export const getAllTodosHandler = Effect.gen(function* () {
@@ -44,17 +42,13 @@ export const updateTodoHandler = Effect.gen(function* () {
   const dto = yield* Schema.decodeUnknown(TodoRequestDto)(body);
   const result = yield* svc.update(ObjectId.createFromHexString(id), dto);
 
-  return result.matchedCount === 0
-    ? HttpServerResponse.empty({ status: 404 })
-    : HttpServerResponse.unsafeJson(result);
+  return HttpServerResponse.unsafeJson(result);
 }).pipe(Effect.withSpan("updateTodoHandler"));
 
 export const deleteTodoHandler = Effect.gen(function* () {
   const svc = yield* TodoCommandRepository;
   const params = yield* HttpRouter.params;
   const id = yield* Schema.decodeUnknown(TodoId)(params.id);
-  const result = yield* svc.delete(ObjectId.createFromHexString(id));
-  return result.deletedCount === 0
-    ? HttpServerResponse.empty({ status: 404 })
-    : HttpServerResponse.empty({ status: 204 });
+  yield* svc.delete(ObjectId.createFromHexString(id));
+  return HttpServerResponse.empty({ status: 204 });
 }).pipe(Effect.withSpan("deleteTodoHandler"));

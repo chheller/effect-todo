@@ -1,6 +1,6 @@
 import { Context, Effect, Layer, Predicate } from "effect";
 import { NoSuchElementException } from "effect/Cause";
-import type { ObjectId, WithId } from "mongodb";
+import { BSON, type ObjectId, type WithId } from "mongodb";
 import {
   type GenericMongoDbException,
   MongoDatabaseReaderProvider,
@@ -46,7 +46,24 @@ export const makeTodoQueryRepository = Effect.gen(function* () {
 
 export const TodoQueryRepository =
   Context.GenericTag<TodoQueryRepository>("TodoQueryRepositry");
+
 export const TodoQueryRepositoryLive = Layer.scoped(
   TodoQueryRepository,
   makeTodoQueryRepository,
+);
+
+export const TodoQueryRepositoryTest = Layer.scoped(
+  TodoQueryRepository,
+  Effect.succeed({
+    read: () =>
+      Effect.succeed({
+        _id: new BSON.ObjectId(),
+        title: "test",
+        completed: false,
+      }),
+    readMany: () =>
+      Effect.succeed([
+        { _id: new BSON.ObjectId(), title: "test", completed: false },
+      ]),
+  } as unknown as TodoQueryRepository),
 );

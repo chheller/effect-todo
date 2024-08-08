@@ -119,7 +119,7 @@ export const MongoDatabaseReaderProvider =
   Context.GenericTag<MongoDatabaseProvider>("MongoDatabaseReaderProvider");
 
 export const MongoDatabaseWriterProvider =
-  Context.GenericTag<MongoDatabaseProvider>("MongoDatabaseReaderProvider");
+  Context.GenericTag<MongoDatabaseProvider>("MongoDatabaseWriterProvider");
 
 export const MongoReaderProviderLive = Layer.scoped(
   MongoDatabaseReaderProvider,

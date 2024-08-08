@@ -1,6 +1,5 @@
 import { HttpRouter } from "@effect/platform";
-import { TodoHttpLive } from "./todo/todo-http-service";
-import { Effect } from "effect";
+import { TodoHttpLive } from "./todo/todo-router";
 import { HttpErrorHandlers } from "./http/error-handler";
 
 export const router = HttpRouter.empty.pipe(

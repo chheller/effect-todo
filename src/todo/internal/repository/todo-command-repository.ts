@@ -1,5 +1,5 @@
 import { Effect, Context, Layer } from "effect";
-import type { NoSuchElementException } from "effect/Cause";
+import { NoSuchElementException } from "effect/Cause";
 import type { ObjectId, UpdateResult, DeleteResult, WithoutId } from "mongodb";
 import {
   type GenericMongoDbException,
@@ -7,6 +7,7 @@ import {
 } from "../../../database/mongo-database-provider";
 import type { TodoRequestDto, TodoModel } from "../todo-domain";
 import { TodoQueryRepository } from "./todo-query-repository";
+import _ from "lodash";
 
 /**
  * Effect for creating the TodoCommandRepository
@@ -22,11 +23,14 @@ export interface TodoCommandRepository {
   readonly update: (
     _id: ObjectId,
     todo: TodoRequestDto,
-  ) => Effect.Effect<UpdateResult<TodoModel>, GenericMongoDbException>;
+  ) => Effect.Effect<
+    UpdateResult<TodoModel>,
+    GenericMongoDbException | NoSuchElementException
+  >;
 
   readonly delete: (
     _id: ObjectId,
-  ) => Effect.Effect<DeleteResult, GenericMongoDbException>;
+  ) => Effect.Effect<void, GenericMongoDbException>;
 }
 export const makeTodoCommandRepository = Effect.gen(function* () {
   const queryRepository = yield* TodoQueryRepository;
@@ -45,10 +49,26 @@ export const makeTodoCommandRepository = Effect.gen(function* () {
     );
 
   const update = (_id: ObjectId, todo: TodoRequestDto) =>
-    useTodos((_) => _.updateOne({ _id }, { $set: todo }, { upsert: false }));
+    useTodos((_) =>
+      _.updateOne({ _id }, { $set: todo }, { upsert: false }),
+    ).pipe(
+      Effect.filterOrFail(
+        (_) => _.modifiedCount > 0,
+        () => new NoSuchElementException("Todo not found"),
+      ),
+      Effect.withSpan("todo-update"),
+    );
 
   const delete_ = (_id: ObjectId) =>
-    useTodos((_) => _.deleteOne({ _id })).pipe(Effect.withSpan("todo-delete"));
+    useTodos((_) => _.deleteOne({ _id }))
+      .pipe(Effect.withSpan("todo-delete"))
+      .pipe(
+        Effect.filterOrFail(
+          (_) => _.deletedCount > 0,
+          () => new NoSuchElementException(),
+        ),
+        Effect.catchTags({ NoSuchElementException: Effect.logWarning }),
+      );
 
   return TodoCommandRepository.of({
     create,
