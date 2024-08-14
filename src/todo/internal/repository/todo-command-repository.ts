@@ -7,7 +7,6 @@ import {
 } from "../../../database/mongo-database-provider";
 import type { TodoRequestDto, TodoModel } from "../todo-domain";
 import { TodoQueryRepository } from "./todo-query-repository";
-import _ from "lodash";
 
 /**
  * Effect for creating the TodoCommandRepository

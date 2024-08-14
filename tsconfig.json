@@ -25,7 +25,7 @@
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false,
-    "types": ["bun-types", "vitest"]
+    "types": ["bun-types"]
   },
   "ts-node": {
     "esm": true,

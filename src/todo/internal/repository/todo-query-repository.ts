@@ -52,18 +52,3 @@ export const TodoQueryRepositoryLive = Layer.scoped(
   makeTodoQueryRepository,
 );
 
-export const TodoQueryRepositoryTest = Layer.scoped(
-  TodoQueryRepository,
-  Effect.succeed({
-    read: () =>
-      Effect.succeed({
-        _id: new BSON.ObjectId(),
-        title: "test",
-        completed: false,
-      }),
-    readMany: () =>
-      Effect.succeed([
-        { _id: new BSON.ObjectId(), title: "test", completed: false },
-      ]),
-  } as unknown as TodoQueryRepository),
-);
