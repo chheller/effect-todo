@@ -11,7 +11,7 @@ import {
   BunHttpServer,
 } from "@effect/platform-bun";
 import { runMain } from "@effect/platform-bun/BunRuntime";
-import { Effect, Layer, Logger } from "effect";
+import { Effect, Layer, Logger, LogLevel } from "effect";
 
 import { NodeSdk } from "@effect/opentelemetry";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
@@ -62,4 +62,6 @@ const HttpLive = HttpRouter.empty.pipe(
   Layer.provide(NodeSdkLive),
 );
 
-runMain(Layer.launch(HttpLive));
+runMain(
+  Layer.launch(HttpLive).pipe(Logger.withMinimumLogLevel(LogLevel.Debug)),
+);
