@@ -1,38 +1,68 @@
-import { Context, Effect, Layer } from "effect";
+import { Context, Effect, Layer, Redacted } from "effect";
 import { mock } from "bun:test";
 import {
   GenericMongoDbException,
+  makeMongoDatabaseProviderAcq,
+  MongoDatabaseReaderProvider,
+  MongoDatabaseWriterProvider,
   type MongoDatabaseProvider,
 } from "./mongo-database-provider";
 import { MongoMemoryServer } from "mongodb-memory-server";
+import { makeMongoConfig, type MongoConfig } from "../config/mongo-config";
 
-const makeMongoMockProvider = Effect.gen(function* () {
-  return yield* Effect.succeed({
-    useDb: mock(),
-    useCollection: mock(),
+const extraReaderUser = {
+  createUser: "effect_reader",
+  pwd: "effect_reader_secret",
+  roles: ["readAnyDatabase"],
+};
+
+const extraWriterUser = {
+  createUser: "effect_writer",
+  pwd: "effect_writer_secret",
+  roles: ["readWriteAnyDatabase"],
+};
+// For some reason, mongo memory server doesn't export this interface
+interface CreateUser {
+  createUser: string;
+  pwd: string;
+  roles: string[];
+}
+
+const provideMongoServer = Effect.promise(async () => {
+  const server = new MongoMemoryServer({
+    instance: { dbName: "effect", port: 27017 },
+    auth: {
+      enable: true,
+      extraUsers: [extraReaderUser, extraWriterUser],
+    },
   });
+  await server.start();
+  return server;
 });
 
-const makeMongoTestProvider = Effect.gen(function* () {
-  const server = new MongoMemoryServer();
-  server.
-  const uri = yield* Effect.tryPromise({
-    try: () => server.getUri(),
-    catch: (e) => new GenericMongoDbException(e),
-  });
-  const dbName = 
-  return {
-    useDb: Effect.succeed(() => uri),
-    useCollection: Effect.succeed(() => dbName),
-  };
-});
+const makeTestMongoProvider = (user: CreateUser) =>
+  Effect.gen(function* () {
+    const server = yield* provideMongoServer;
 
-export const MongoReaderProviderMocked = Layer.scoped(
-  Context.GenericTag<MongoDatabaseProvider>("MongoReaderProvider"),
-  makeMongoMockProvider,
+    const config: MongoConfig = {
+      getMongoUri: () => server.getUri(),
+      user: user.createUser,
+      pwd: Redacted.make(user.pwd),
+      host: "localhost",
+      port: 27017,
+    };
+
+    return MongoDatabaseReaderProvider.of(
+      yield* makeMongoDatabaseProviderAcq(config),
+    );
+  });
+
+export const MongoDatabaseReaderProviderTest = Layer.scoped(
+  MongoDatabaseReaderProvider,
+  makeTestMongoProvider(extraReaderUser),
 );
 
-export const MongoReaderProviderTest = Layer.scoped(
-  Context.GenericTag<MongoDatabaseProvider>("MongoReaderProvider"),
-  makeMongoTestProvider,
+export const MongoDatabaseWriterProviderTest = Layer.scoped(
+  MongoDatabaseWriterProvider,
+  makeTestMongoProvider(extraWriterUser),
 );

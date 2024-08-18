@@ -42,7 +42,7 @@ const ServerLive = Layer.mergeAll(
   BunContext.layer,
 );
 
-const NodeSdkLive = NodeSdk.layer(() => ({
+const OtelSdkLive = NodeSdk.layer(() => ({
   resource: { serviceName: "effect-todo-http-api" },
   spanProcessor: new BatchSpanProcessor(new OTLPTraceExporter()),
 }));
@@ -59,7 +59,7 @@ const HttpLive = HttpRouter.empty.pipe(
   Layer.provide(MongoReaderProviderLive),
   Layer.provide(MongoWriterProviderLive),
   Layer.provide(Logger.pretty),
-  Layer.provide(NodeSdkLive),
+  Layer.provide(OtelSdkLive),
 );
 
 runMain(
