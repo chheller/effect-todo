@@ -69,9 +69,10 @@ const runTest = <E, A>(effect: Effect.Effect<A, E>) =>
     .pipe(Effect.runPromise)
     .then((f) => f());
 
-const TestEnv = TestEnvironment.TestContext.pipe(
-  Layer.provide(Logger.remove(Logger.defaultLogger)),
-);
+const TestEnv = TestEnvironment.TestContext;
+// .pipe(
+//   Layer.provide(Logger.remove(Logger.defaultLogger)),
+// );
 
 const makeTester = <R>(
   mapEffect: <A, E>(self: Effect.Effect<A, E, R>) => Effect.Effect<A, E, never>,

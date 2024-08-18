@@ -4,6 +4,7 @@ import { expect } from "bun:test";
 import {
   MongoDatabaseReaderProviderTest,
   MongoDatabaseWriterProviderTest,
+  MongoMemoryServerProviderLive,
 } from "../mongo-database-test-provider";
 import {
   MongoDatabaseReaderProvider,
@@ -11,7 +12,10 @@ import {
 } from "../mongo-database-provider";
 
 const provide = Effect.provide(
-  Layer.merge(MongoDatabaseReaderProviderTest, MongoDatabaseWriterProviderTest),
+  Layer.merge(
+    MongoDatabaseReaderProviderTest,
+    MongoDatabaseWriterProviderTest,
+  ).pipe(Layer.provide(MongoMemoryServerProviderLive)),
 );
 
 it.effect("should be able to connect to the database", () =>
@@ -26,7 +30,6 @@ it.effect("should be able to connect to the database", () =>
 
       const useWriteTest = writerDb.useCollection(writerColl);
       const useReadTest = readerDb.useCollection(readerColl);
-
       // Act
       const insertedResult = yield* useWriteTest((_) =>
         _.insertOne({ test: "test" }),
@@ -34,7 +37,7 @@ it.effect("should be able to connect to the database", () =>
       const readResult = yield* useReadTest((_) =>
         _.findOne({ _id: insertedResult.insertedId }),
       );
-
+      // yield* Effect.sleep(10000000);
       // Assert
       expect(insertedResult).not.toBeNull();
       expect(readResult).not.toBeNull();

@@ -9,6 +9,7 @@ import {
 } from "./mongo-database-provider";
 import { MongoMemoryServer } from "mongodb-memory-server";
 import { makeMongoConfig, type MongoConfig } from "../config/mongo-config";
+import { MongoClient } from "mongodb";
 
 const extraReaderUser = {
   createUser: "effect_reader",
@@ -28,22 +29,37 @@ interface CreateUser {
   roles: string[];
 }
 
-const provideMongoServer = Effect.promise(async () => {
-  const server = new MongoMemoryServer({
-    instance: { dbName: "effect", port: 27017 },
-    auth: {
-      enable: true,
-      extraUsers: [extraReaderUser, extraWriterUser],
-    },
+const setupMemoryDatabase = (server: MongoMemoryServer) =>
+  Effect.gen(function* () {
+    // No-op for now, but can use this to globally seed the database
   });
-  await server.start();
-  return server;
-});
+
+export const MongoMemoryServerProvider = Context.GenericTag<MongoMemoryServer>(
+  "MongoMemoryServerProvider",
+);
+export const MongoMemoryServerProviderLive = Layer.scoped(
+  MongoMemoryServerProvider,
+  Effect.promise(async () => {
+    const server = new MongoMemoryServer({
+      instance: { dbName: "effect", port: 27017 },
+
+      auth: {
+        customRootName: "root",
+        customRootPwd: "secret",
+
+        enable: true,
+        extraUsers: [extraReaderUser, extraWriterUser],
+      },
+    });
+    await server.start();
+    return server;
+  }),
+);
 
 const makeTestMongoProvider = (user: CreateUser) =>
   Effect.gen(function* () {
-    const server = yield* provideMongoServer;
-
+    const server = yield* MongoMemoryServerProvider;
+    yield* setupMemoryDatabase(server);
     const config: MongoConfig = {
       getMongoUri: () => server.getUri(),
       user: user.createUser,

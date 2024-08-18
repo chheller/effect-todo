@@ -3,6 +3,7 @@ import * as Mongo from "mongodb";
 import { makeMongoConfig, type MongoConfig } from "../config/mongo-config";
 
 export interface MongoDatabaseProvider {
+  db: (dbName?: string, options?: Mongo.DbOptions) => Mongo.Db;
   /**
    * Method to create a hook to a particular database and collection
    * @param database The name of the database to use
@@ -117,7 +118,7 @@ export const makeMongoDatabaseProviderAcq = (config: MongoConfig) => {
           catch: (e) => onError?.(e) ?? new GenericMongoDbException(e),
         });
 
-    return { useDb: use, useCollection };
+    return { useDb: use, useCollection, db: client.db };
   });
 };
 
