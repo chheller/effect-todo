@@ -66,7 +66,6 @@ export class GenericMongoDbException extends Error {
 export const makeMongoDatabaseProviderAcq = (config: MongoConfig) => {
   const acquireMongoClient = Effect.gen(function* () {
     yield* Effect.logInfo("Acquiring Mongo connection");
-    yield* Effect.logDebug(config);
     const mongoClient = new Mongo.MongoClient(config.getMongoUri(), {
       auth: {
         username: config.user,
@@ -134,7 +133,7 @@ export const MongoDatabaseWriterProvider =
 /**
  * Provide a scoped instance of the MongoDatabaseProvider for reading. When the scope is discarded, the connection is released
  */
-export const MongoReaderProviderLive = Layer.scoped(
+const MongoReaderProviderLive = Layer.scoped(
   MongoDatabaseReaderProvider,
   Effect.flatMap(makeMongoConfig("MONGO_READER"), (config) =>
     makeMongoDatabaseProviderAcq(config),
@@ -144,9 +143,15 @@ export const MongoReaderProviderLive = Layer.scoped(
 /**
  * Provide a scoped instance of the MongoDatabaseProvider for writing. When the scope is discarded, the connection is released
  */
-export const MongoWriterProviderLive = Layer.scoped(
+const MongoWriterProviderLive = Layer.scoped(
   MongoDatabaseWriterProvider,
   Effect.flatMap(makeMongoConfig("MONGO_WRITER"), (config) =>
     makeMongoDatabaseProviderAcq(config),
   ).pipe(Effect.andThen(MongoDatabaseWriterProvider.of)),
+);
+
+
+export const MongoDatabaseProviderLive = Layer.merge(
+  MongoReaderProviderLive,
+  MongoWriterProviderLive,
 );

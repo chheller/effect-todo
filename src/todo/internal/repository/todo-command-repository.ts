@@ -3,6 +3,7 @@ import { NoSuchElementException } from "effect/Cause";
 import type { ObjectId, UpdateResult, DeleteResult, WithoutId } from "mongodb";
 import {
   type GenericMongoDbException,
+  MongoDatabaseProviderLive,
   MongoDatabaseWriterProvider,
 } from "../../../database/mongo-database-provider";
 import type { TodoRequestDto, TodoModel } from "../todo-domain";
@@ -11,26 +12,6 @@ import { TodoQueryRepository } from "./todo-query-repository";
 /**
  * Effect for creating the TodoCommandRepository
  */
-export interface TodoCommandRepository {
-  readonly create: (
-    todo: TodoRequestDto,
-  ) => Effect.Effect<
-    TodoModel,
-    GenericMongoDbException | NoSuchElementException
-  >;
-
-  readonly update: (
-    _id: ObjectId,
-    todo: TodoRequestDto,
-  ) => Effect.Effect<
-    UpdateResult<TodoModel>,
-    GenericMongoDbException | NoSuchElementException
-  >;
-
-  readonly delete: (
-    _id: ObjectId,
-  ) => Effect.Effect<void, GenericMongoDbException>;
-}
 export const makeTodoCommandRepository = Effect.gen(function* () {
   const queryRepository = yield* TodoQueryRepository;
   const mongoDatabaseProvider = yield* MongoDatabaseWriterProvider;
@@ -69,17 +50,39 @@ export const makeTodoCommandRepository = Effect.gen(function* () {
         Effect.catchTags({ NoSuchElementException: Effect.logWarning }),
       );
 
-  return TodoCommandRepository.of({
+  return {
     create,
     update,
     delete: delete_,
-  });
+  };
 });
 
-export const TodoCommandRepository = Context.GenericTag<TodoCommandRepository>(
-  "TodoWriteRepository",
-);
-export const TodoCommandRepositoryLive = Layer.scoped(
+export class TodoCommandRepository extends Context.Tag("TodoCommandRepository")<
   TodoCommandRepository,
-  makeTodoCommandRepository,
-);
+  {
+    readonly create: (
+      todo: TodoRequestDto,
+    ) => Effect.Effect<
+      TodoModel,
+      GenericMongoDbException | NoSuchElementException
+    >;
+
+    readonly update: (
+      _id: ObjectId,
+      todo: TodoRequestDto,
+    ) => Effect.Effect<
+      UpdateResult<TodoModel>,
+      GenericMongoDbException | NoSuchElementException
+    >;
+
+    readonly delete: (
+      _id: ObjectId,
+    ) => Effect.Effect<void, GenericMongoDbException>;
+  }
+>() {
+  static Layer = Layer.effect(this, makeTodoCommandRepository);
+  static Live = Layer.provide(
+    this.Layer,
+    Layer.merge(MongoDatabaseProviderLive, TodoQueryRepository.Live),
+  );
+}

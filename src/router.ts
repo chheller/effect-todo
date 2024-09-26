@@ -1,12 +1,16 @@
 import { HttpRouter } from "@effect/platform";
-import { TodoHttpLive } from "./todo/todo-router";
 import { HttpErrorHandlers } from "./http/error-handler";
+import { Effect } from "effect";
+import { TodoHttpHandlers } from "./todo/internal/todo-handlers";
 
-export const router = HttpRouter.empty.pipe(
-  HttpRouter.mount("/todo", TodoHttpLive),
-  HttpRouter.catchTags({
-    ParseError: HttpErrorHandlers.handleParseError,
-    NoSuchElementException: HttpErrorHandlers.handleNoSuchElementError,
-  }),
-  HttpRouter.catchAll(HttpErrorHandlers.handleInternalServerError),
-);
+export const makeBaseRouter = Effect.gen(function* () {
+  const todoHttpHandlers = yield* TodoHttpHandlers;
+  return HttpRouter.empty.pipe(
+    HttpRouter.mount("/todo", todoHttpHandlers),
+    HttpRouter.catchTags({
+      ParseError: HttpErrorHandlers.handleParseError,
+      NoSuchElementException: HttpErrorHandlers.handleNoSuchElementError,
+    }),
+    HttpRouter.catchAll(HttpErrorHandlers.handleInternalServerError),
+  );
+});

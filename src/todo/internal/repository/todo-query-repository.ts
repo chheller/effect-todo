@@ -3,19 +3,12 @@ import { NoSuchElementException } from "effect/Cause";
 import { BSON, type ObjectId, type WithId } from "mongodb";
 import {
   type GenericMongoDbException,
+  type MongoDatabaseProvider,
+  MongoDatabaseProviderLive,
   MongoDatabaseReaderProvider,
 } from "../../../database/mongo-database-provider";
 import type { TodoModel } from "../todo-domain";
 
-export interface TodoQueryRepository {
-  readonly read: (
-    _id: ObjectId,
-  ) => Effect.Effect<
-    WithId<TodoModel>,
-    GenericMongoDbException | NoSuchElementException
-  >;
-  readonly readMany: () => Effect.Effect<TodoModel[], GenericMongoDbException>;
-}
 /**
  * Effect for creating the TodoQueryRepository
  */
@@ -38,17 +31,24 @@ export const makeTodoQueryRepository = Effect.gen(function* () {
       () => new NoSuchElementException("Failed to fetch inserted document"),
     ).pipe(Effect.withSpan("todo-read"));
 
-  return TodoQueryRepository.of({
-    read,
-    readMany,
-  });
+  return { read, readMany };
 });
 
-export const TodoQueryRepository =
-  Context.GenericTag<TodoQueryRepository>("TodoQueryRepositry");
-
-export const TodoQueryRepositoryLive = Layer.scoped(
+export class TodoQueryRepository extends Context.Tag("TodoQueryRepository")<
   TodoQueryRepository,
-  makeTodoQueryRepository,
-);
-
+  {
+    readonly read: (
+      _id: ObjectId,
+    ) => Effect.Effect<
+      WithId<TodoModel>,
+      GenericMongoDbException | NoSuchElementException
+    >;
+    readonly readMany: () => Effect.Effect<
+      TodoModel[],
+      GenericMongoDbException
+    >;
+  }
+>() {
+  static Layer = Layer.effect(this, makeTodoQueryRepository);
+  static Live = Layer.provide(this.Layer, MongoDatabaseProviderLive);
+}

@@ -6,24 +6,23 @@ import {
 } from "@effect/platform";
 import {
   BunContext,
-  BunEtag,
   BunHttpPlatform,
   BunHttpServer,
 } from "@effect/platform-bun";
 import { runMain } from "@effect/platform-bun/BunRuntime";
-import { Effect, Layer, Logger, LogLevel } from "effect";
+import { Effect, flow, Layer, Logger, LogLevel } from "effect";
 
 import { NodeSdk } from "@effect/opentelemetry";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
 import { BatchSpanProcessor } from "@opentelemetry/sdk-trace-base";
 import { ServerConfigLive } from "./config/server-config";
-import {
-  MongoReaderProviderLive,
-  MongoWriterProviderLive,
-} from "./database/mongo-database-provider";
-import { router } from "./router";
-import { TodoCommandRepositoryLive } from "./todo/internal/repository/todo-command-repository";
-import { TodoQueryRepositoryLive } from "./todo/internal/repository/todo-query-repository";
+
+import { makeBaseRouter } from "./router";
+
+import { authorizationMiddleware } from "./auth/authorization-middleware";
+import { Auth0 } from "./auth/auth0";
+import { Auth0ConfigProvider } from "./auth/auth0.config";
+import { TodoHttpHandlers } from "./todo/internal/todo-handlers";
 
 
 const ServerLive = Layer.mergeAll(
@@ -38,7 +37,6 @@ const ServerLive = Layer.mergeAll(
     ),
   ),
   BunHttpPlatform.layer,
-  BunEtag.layerWeak,
   BunContext.layer,
 );
 
@@ -47,17 +45,33 @@ const OtelSdkLive = NodeSdk.layer(() => ({
   spanProcessor: new BatchSpanProcessor(new OTLPTraceExporter()),
 }));
 
+const Router = Effect.gen(function* () {
+  const middleware = flow(
+    HttpMiddleware.cors({
+      allowedOrigins: ["*"],
+      allowedMethods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+      allowedHeaders: ["*"],
+    }),
+    yield* authorizationMiddleware,
+    HttpMiddleware.logger,
+  );
 
-const HttpLive = HttpRouter.empty.pipe(
-  HttpRouter.get("/health", HttpServerResponse.text("OK")),
-  HttpRouter.mount("/", router),
-  HttpServer.serve(HttpMiddleware.logger),
-  HttpServer.withLogAddress,
+  const baseRouter = yield* makeBaseRouter;
+  return HttpRouter.empty.pipe(
+    HttpRouter.get("/health", HttpServerResponse.text("OK")),
+    HttpRouter.mount("/", baseRouter),
+    HttpServer.serve(middleware),
+    HttpServer.withLogAddress,
+  );
+});
+
+const RouterLive = Layer.unwrapEffect(Router).pipe(
+  Layer.provide(Auth0.Test),
+  Layer.provide(Auth0ConfigProvider.Test),
+  Layer.provide(TodoHttpHandlers.Live),
+);
+const HttpLive = RouterLive.pipe(
   Layer.provide(ServerLive),
-  Layer.provide(TodoCommandRepositoryLive),
-  Layer.provide(TodoQueryRepositoryLive),
-  Layer.provide(MongoReaderProviderLive),
-  Layer.provide(MongoWriterProviderLive),
   Layer.provide(Logger.pretty),
   Layer.provide(OtelSdkLive),
 );

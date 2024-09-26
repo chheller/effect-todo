@@ -1,15 +1,13 @@
+
 import { Context, Effect, Layer, Redacted } from "effect";
-import { mock } from "bun:test";
+
+import { MongoMemoryServer } from "mongodb-memory-server";
+import type { MongoConfig } from "../config/mongo-config";
 import {
-  GenericMongoDbException,
-  makeMongoDatabaseProviderAcq,
   MongoDatabaseReaderProvider,
   MongoDatabaseWriterProvider,
-  type MongoDatabaseProvider,
+  makeMongoDatabaseProviderAcq,
 } from "./mongo-database-provider";
-import { MongoMemoryServer } from "mongodb-memory-server";
-import { makeMongoConfig, type MongoConfig } from "../config/mongo-config";
-import { MongoClient } from "mongodb";
 
 const extraReaderUser = {
   createUser: "effect_reader",

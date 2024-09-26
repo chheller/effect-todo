@@ -37,7 +37,6 @@ it.effect("should be able to connect to the database", () =>
       const readResult = yield* useReadTest((_) =>
         _.findOne({ _id: insertedResult.insertedId }),
       );
-      // yield* Effect.sleep(10000000);
       // Assert
       expect(insertedResult).not.toBeNull();
       expect(readResult).not.toBeNull();

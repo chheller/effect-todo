@@ -6,28 +6,45 @@
     "test": "bun --node vitest"
   },
   "dependencies": {
-    "@effect/opentelemetry": "^0.35.0",
-    "@effect/platform": "^0.59.0",
-    "@effect/platform-bun": "^0.39.0",
-    "@opentelemetry/exporter-trace-otlp-http": "^0.52.1",
-    "@opentelemetry/sdk-metrics": "^1.25.1",
-    "@opentelemetry/sdk-trace-base": "^1.25.1",
-    "@opentelemetry/sdk-trace-node": "^1.25.1",
-    "@opentelemetry/sdk-trace-web": "^1.25.1",
-    "effect": "^3.5.3",
-    "mongodb": "^6.8.0",
+    "@effect-app/core": "^1.8.1",
+    "@effect-app/prelude": "^0.151.3",
+    "@effect-app/schema": "^1.10.1",
+    "@effect/opentelemetry": "^0.37.3",
+    "@effect/platform": "^0.65.5",
+    "@effect/platform-bun": "^0.45.5",
+    "@effect/platform-node": "^0.60.5",
+    "@effect/schema": "^0.73.4",
+    "@effect/sql": "0.12.6",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.53.0",
+    "@opentelemetry/sdk-metrics": "^1.26.0",
+    "@opentelemetry/sdk-trace-base": "^1.26.0",
+    "@opentelemetry/sdk-trace-node": "^1.26.0",
+    "@opentelemetry/sdk-trace-web": "^1.26.0",
+    "effect": "^3.8.3",
+    "jose": "^5.9.2",
+    "mongodb": "^6.9.0",
     "mongodb-memory-server": "^10.0.0"
   },
   "name": "effect-todo",
   "module": "index.ts",
   "type": "module",
   "devDependencies": {
-    "@biomejs/biome": "^1.8.3",
-    "@effect/vitest": "^0.8.0",
-    "@types/bun": "^1.1.6",
+    "@biomejs/biome": "^1.9.2",
+    "@effect/vitest": "^0.10.3",
+    "@types/bun": "^1.1.9",
+    "@types/json-schema": "^7.0.15",
+    "@types/luxon": "^3.4.2",
     "@types/mongodb": "^4.0.7",
-    "typescript": "^5.5.4",
-    "vitest": "^2.0.5"
+    "biome": "^0.3.3",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
   },
-  "trustedDependencies": ["@biomejs/biome"]
+  "trustedDependencies": [
+    "@biomejs/biome",
+    "core-js",
+    "esbuild",
+    "mongodb-memory-server",
+    "msgpackr-extract",
+    "protobufjs"
+  ]
 }
