@@ -3,7 +3,6 @@ import { Context, DateTime, Effect, Either, Layer, Redacted } from "effect";
 import { TaggedError } from "effect/Data";
 import { createRemoteJWKSet, jwtVerify } from "jose";
 import { Auth0ConfigProvider } from "./auth0.config";
-import type { Auth } from "mongodb";
 
 const _jwtPattern = /^(Bearer\s)(?:[\w-]*\.){2}[\w-]*$/;
 export const UserIdSchema = Schema.String.pipe(

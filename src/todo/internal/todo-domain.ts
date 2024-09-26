@@ -1,9 +1,9 @@
 import { Schema as S } from "@effect/schema";
 import { Model } from "@effect/sql";
-import { ObjectIdField, ObjectIdSchema } from "../../database/object-id.schema";
-import { SearchModel } from "../../http/search-schema";
 import { UserIdSchema } from "../../auth/auth0";
+import { ObjectIdField, ObjectIdSchema } from "../../database/object-id.schema";
 import { PaginatedResponseModel } from "../../http/paginated-response";
+import { SearchModel } from "../../http/search-schema";
 
 export class GenericTodoRepoError extends Error {
   _tag = "GenericTodoRepoError" as const;

@@ -1,6 +1,6 @@
 import { Context, Effect, Layer, Redacted } from "effect";
 import * as Mongo from "mongodb";
-import { makeMongoConfig, type MongoConfig } from "../config/mongo-config";
+import { type MongoConfig, makeMongoConfig } from "../config/mongo-config";
 
 export interface MongoDatabaseProvider {
   db: (dbName?: string, options?: Mongo.DbOptions) => Mongo.Db;

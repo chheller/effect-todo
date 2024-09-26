@@ -4,5 +4,8 @@
   "editor.formatOnSave": true,
   "editor.formatOnType": true,
   "typescript.tsdk": "node_modules/typescript/lib",
-  "editor.formatOnSaveMode": "modificationsIfAvailable"
+  "editor.formatOnSaveMode": "modificationsIfAvailable",
+  "editor.codeActionsOnSave": {
+    "source.organizeImports": "explicit"
+  }
 }

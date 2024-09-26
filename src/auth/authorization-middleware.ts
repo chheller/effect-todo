@@ -5,7 +5,7 @@ import {
 } from "@effect/platform";
 
 import { Effect } from "effect";
-import { Auth0, AuthorizationSchema, AuthorizationToken } from "./auth0";
+import { Auth0, AuthorizationToken } from "./auth0";
 
 export const authorizationMiddleware = Effect.map(Auth0, (auth0) =>
   HttpMiddleware.make((app) =>

@@ -1,21 +1,20 @@
+import { Schema } from "@effect/schema";
+import type { ParseError } from "@effect/schema/ParseResult";
 import { Context, Effect, Layer, Predicate } from "effect";
 import { NoSuchElementException } from "effect/Cause";
-import { BSON, type ObjectId, type WithId } from "mongodb";
+import type { ObjectId } from "mongodb";
 import {
   type GenericMongoDbException,
-  type MongoDatabaseProvider,
   MongoDatabaseProviderLive,
   MongoDatabaseReaderProvider,
 } from "../../../database/mongo-database-provider";
+import type { ObjectIdSchema } from "../../../database/object-id.schema";
+import { makePaginatedSearchAggregation } from "../../../database/search-aggregation";
 import {
   PaginatedTodoResponse,
   type SearchTodoModel,
   TodoModel,
 } from "../todo-domain";
-import type { ObjectIdSchema } from "../../../database/object-id.schema";
-import { makePaginatedSearchAggregation } from "../../../database/search-aggregation";
-import { Schema } from "@effect/schema";
-import type { ParseError } from "@effect/schema/ParseResult";
 
 /**
  * Effect for creating the TodoQueryRepository

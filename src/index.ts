@@ -10,7 +10,7 @@ import {
   BunHttpServer,
 } from "@effect/platform-bun";
 import { runMain } from "@effect/platform-bun/BunRuntime";
-import { Effect, flow, Layer, Logger, LogLevel } from "effect";
+import { Effect, Layer, LogLevel, Logger, flow } from "effect";
 
 import { NodeSdk } from "@effect/opentelemetry";
 import { OTLPTraceExporter } from "@opentelemetry/exporter-trace-otlp-http";
@@ -19,9 +19,9 @@ import { ServerConfigLive } from "./config/server-config";
 
 import { makeBaseRouter } from "./router";
 
-import { authorizationMiddleware } from "./auth/authorization-middleware";
 import { Auth0 } from "./auth/auth0";
 import { Auth0ConfigProvider } from "./auth/auth0.config";
+import { authorizationMiddleware } from "./auth/authorization-middleware";
 import { TodoHttpHandlers } from "./todo/internal/todo-handlers";
 
 

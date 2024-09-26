@@ -1,17 +1,17 @@
-import { Effect, Context, Layer } from "effect";
+import { Schema } from "@effect/schema";
+import type { ParseError } from "@effect/schema/ParseResult";
+import { Context, Effect, Layer } from "effect";
 import { NoSuchElementException } from "effect/Cause";
-import type { ObjectId, BSON } from "mongodb";
+import type { BSON, ObjectId } from "mongodb";
+import type { UserIdSchema } from "../../../auth/auth0";
 import {
   type GenericMongoDbException,
   MongoDatabaseProviderLive,
   MongoDatabaseWriterProvider,
 } from "../../../database/mongo-database-provider";
+import type { ObjectIdSchema } from "../../../database/object-id.schema";
 import { TodoModel } from "../todo-domain";
 import { TodoQueryRepository } from "./todo-query-repository";
-import { Schema } from "@effect/schema";
-import type { ObjectIdSchema } from "../../../database/object-id.schema";
-import type { UserIdSchema } from "../../../auth/auth0";
-import type { ParseError } from "@effect/schema/ParseResult";
 
 /**
  * Effect for creating the TodoCommandRepository

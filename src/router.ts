@@ -1,6 +1,6 @@
 import { HttpRouter } from "@effect/platform";
-import { HttpErrorHandlers } from "./http/error-handler";
 import { Effect } from "effect";
+import { HttpErrorHandlers } from "./http/error-handler";
 import { TodoHttpHandlers } from "./todo/internal/todo-handlers";
 
 export const makeBaseRouter = Effect.gen(function* () {

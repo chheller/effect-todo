@@ -1,33 +1,27 @@
 import {
   HttpRouter,
-  HttpServerResponse,
   HttpServerRequest,
+  HttpServerResponse,
 } from "@effect/platform";
-import { Context, Effect, Layer } from "effect";
-import { ObjectId } from "mongodb";
-import { TodoCommandRepository } from "./repository/todo-command-repository";
-import { TodoQueryRepository } from "./repository/todo-query-repository";
 import { Schema } from "@effect/schema";
 import type { ParseError } from "@effect/schema/ParseResult";
-import { TodoRepositoryLive } from "./repository/todo-repository";
+import { Context, Effect, Layer } from "effect";
 import { AuthorizationToken } from "../../auth/auth0";
+import { TodoCommandRepository } from "./repository/todo-command-repository";
+import { TodoQueryRepository } from "./repository/todo-query-repository";
+import { TodoRepositoryLive } from "./repository/todo-repository";
 
+import type { RequestError } from "@effect/platform/HttpServerError";
 import { NoSuchElementException } from "effect/Cause";
 import type { GenericMongoDbException } from "../../database/mongo-database-provider";
-import type { RequestError } from "@effect/platform/HttpServerError";
 import { ObjectIdUrlParamSchema } from "../../database/object-id.schema";
+import { PaginationSearchParamsSchema } from "../../http/pagination";
+import { SortRequestSchema } from "../../http/sort";
 import {
   PaginatedTodoResponse,
   SearchTodoModel,
   TodoModel,
 } from "./todo-domain";
-import { SearchModel } from "../../http/search-schema";
-import {
-  PaginationSchema,
-  PaginationSearchParamsSchema,
-} from "../../http/pagination";
-import { SortRequestSchema } from "../../http/sort";
-import { makePaginatedSearchAggregation } from "../../database/search-aggregation";
 
 const make = Effect.gen(function* () {
   const readRepository = yield* TodoQueryRepository;
