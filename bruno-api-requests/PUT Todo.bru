@@ -5,9 +5,13 @@ meta {
 }
 
 patch {
-  url: {{baseUrl}}/todo/6698a1a23752454ac7b9092c
+  url: {{baseUrl}}/todo/:id
   body: json
   auth: none
+}
+
+params:path {
+  id: 66f4d84c1c24287726085be3
 }
 
 body:json {

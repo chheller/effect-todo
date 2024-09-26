@@ -1,0 +1,19 @@
+meta {
+  name: SEARCH TODO
+  type: http
+  seq: 7
+}
+
+post {
+  url: {{baseUrl}}/todo/search
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "match": {
+      "done": true
+    }
+  }
+}

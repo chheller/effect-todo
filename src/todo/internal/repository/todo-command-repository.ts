@@ -43,7 +43,7 @@ export const makeTodoCommandRepository = Effect.gen(function* () {
     userId: typeof UserIdSchema.Type,
     todo: typeof TodoModel.jsonUpdate.Type,
   ) =>
-    Schema.encode(TodoModel.update)({ ...todo, userId }).pipe(
+    Schema.encode(TodoModel.update)({ ...todo, userId, _id }).pipe(
       Effect.flatMap((encodedTodo) =>
         useTodos((_) =>
           _.updateOne({ _id }, { $set: encodedTodo }, { upsert: false }),

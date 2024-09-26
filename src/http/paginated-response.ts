@@ -13,3 +13,5 @@ export class PaginatedResponseModel extends Model.Class<PaginatedResponseModel>(
     { default: () => ({ total: 0, limit: 25, page: 1 }) },
   ),
 }) {}
+
+

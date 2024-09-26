@@ -20,7 +20,7 @@ export class TodoModel extends Model.Class<TodoModel>("TodoModel")({
   description: S.String.pipe(S.minLength(1)),
   userId: Model.GeneratedByApp(UserIdSchema),
   done: S.Boolean,
-  id: ObjectIdField,
+  _id: ObjectIdField,
 }) {}
 
 export class SearchTodoModel extends SearchModel.extend<SearchTodoModel>(

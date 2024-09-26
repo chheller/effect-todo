@@ -22,13 +22,18 @@ import {
   TodoModel,
 } from "./todo-domain";
 import { SearchModel } from "../../http/search-schema";
+import {
+  PaginationSchema,
+  PaginationSearchParamsSchema,
+} from "../../http/pagination";
+import { SortRequestSchema } from "../../http/sort";
+import { makePaginatedSearchAggregation } from "../../database/search-aggregation";
 
 const make = Effect.gen(function* () {
   const readRepository = yield* TodoQueryRepository;
   const writeRepository = yield* TodoCommandRepository;
 
   const getTodoByIdHandler = Effect.gen(function* () {
-    const token = yield* AuthorizationToken;
     const id = yield* HttpRouter.schemaPathParams(ObjectIdUrlParamSchema);
     const result = yield* readRepository.read(id);
     const encoded = yield* Schema.encode(TodoModel.json)(result);
@@ -43,7 +48,12 @@ const make = Effect.gen(function* () {
   }).pipe(Effect.withSpan("getAllTodosHandler"));
 
   const getAllTodosHandler = Effect.gen(function* () {
-    const result = yield* readRepository.search(new SearchTodoModel({ match: {} }));
+    const pagination = yield* HttpServerRequest.schemaSearchParams(
+      PaginationSearchParamsSchema,
+    );
+    const sort = yield* HttpServerRequest.schemaSearchParams(SortRequestSchema);
+    const search = { match: {}, pagination, sort };
+    const result = yield* readRepository.search(new SearchTodoModel(search));
     const encoded = yield* Schema.encode(PaginatedTodoResponse.json)(result);
     return yield* HttpServerResponse.unsafeJson(encoded);
   }).pipe(Effect.withSpan("getAllTodosHandler"));

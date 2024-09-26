@@ -24,7 +24,22 @@ export const makePaginatedSearchAggregation = (search: SearchModel) => {
         ],
       },
     },
-    { $project: { metadata: { $first: "$metadata" }, items: 1 } },
+
+    {
+      $project: {
+        metadata: {
+          $ifNull: [
+            { $first: "$metadata" },
+            {
+              total: 0,
+              page: search.pagination.page,
+              limit: search.pagination.limit,
+            },
+          ],
+        },
+        items: 1,
+      },
+    },
   ] as const;
 };
 

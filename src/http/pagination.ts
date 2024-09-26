@@ -1,10 +1,23 @@
 import { Schema } from "@effect/schema";
 
-export class PaginationRequestSchema extends Schema.Class<PaginationRequestSchema>(
+export class PaginationSchema extends Schema.Class<PaginationSchema>(
   "PaginationRequestSchema",
 )({
-  page: Schema.Int.pipe(Schema.greaterThan(0)),
-  limit: Schema.Int,
+  page: Schema.optionalWith(Schema.Positive, { default: () => 1 }),
+  limit: Schema.optionalWith(Schema.Positive, { default: () => 25 }),
 }) {}
 
-export type PaginationProps = typeof PaginationRequestSchema.Type;
+export class PaginationSearchParamsSchema extends Schema.Class<PaginationSchema>(
+  "PaginationRequestSchema",
+)({
+  page: Schema.optionalWith(
+    Schema.NumberFromString.pipe(Schema.greaterThan(0)),
+    { default: () => 1 },
+  ),
+  limit: Schema.optionalWith(
+    Schema.NumberFromString.pipe(Schema.greaterThan(0)),
+    { default: () => 25 },
+  ),
+}) {}
+
+export type PaginationProps = typeof PaginationSchema.Type;
