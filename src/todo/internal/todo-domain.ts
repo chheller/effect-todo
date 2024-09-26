@@ -1,6 +1,6 @@
 import { Schema as S } from "@effect/schema";
 import { Model } from "@effect/sql";
-import { ObjectIdField } from "../../database/object-id.schema";
+import { ObjectIdField, ObjectIdSchema } from "../../database/object-id.schema";
 import { SearchModel } from "../../http/search-schema";
 import { UserIdSchema } from "../../auth/auth0";
 import { PaginatedResponseModel } from "../../http/paginated-response";
@@ -27,6 +27,7 @@ export class SearchTodoModel extends SearchModel.extend<SearchTodoModel>(
   "SearchTodoModel",
 )({
   match: S.Struct({
+    _id: S.optional(ObjectIdSchema),
     description: S.optional(S.String),
     userId: S.optional(UserIdSchema),
     done: S.optional(S.Boolean),

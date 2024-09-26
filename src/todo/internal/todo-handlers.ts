@@ -12,7 +12,7 @@ import type { ParseError } from "@effect/schema/ParseResult";
 import { TodoRepositoryLive } from "./repository/todo-repository";
 import { AuthorizationToken } from "../../auth/auth0";
 
-import type { NoSuchElementException } from "effect/Cause";
+import { NoSuchElementException } from "effect/Cause";
 import type { GenericMongoDbException } from "../../database/mongo-database-provider";
 import type { RequestError } from "@effect/platform/HttpServerError";
 import { ObjectIdUrlParamSchema } from "../../database/object-id.schema";
@@ -35,8 +35,12 @@ const make = Effect.gen(function* () {
 
   const getTodoByIdHandler = Effect.gen(function* () {
     const id = yield* HttpRouter.schemaPathParams(ObjectIdUrlParamSchema);
-    const result = yield* readRepository.read(id);
-    const encoded = yield* Schema.encode(TodoModel.json)(result);
+    const result = yield* readRepository.search(
+      new SearchTodoModel({ match: { _id: id } }),
+    );
+    if (result.items.length === 0)
+      return yield* new NoSuchElementException(`No such todo with _id ${id}`);
+    const encoded = yield* Schema.encode(TodoModel.json)(result.items[0]);
     return HttpServerResponse.unsafeJson(encoded);
   }).pipe(Effect.withSpan("getTodoByIdHandler"));
 

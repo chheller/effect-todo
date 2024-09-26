@@ -5,7 +5,11 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/todo/66f4d84c1c24287726085be3
+  url: {{baseUrl}}/todo/:id
   body: none
   auth: none
+}
+
+params:path {
+  id: 66f4d84c1c24287726085be3
 }

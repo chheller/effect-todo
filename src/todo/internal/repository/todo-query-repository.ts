@@ -35,7 +35,6 @@ export const makeTodoQueryRepository = Effect.gen(function* () {
         ...makePaginatedSearchAggregation(search),
       ]).next(),
     ).pipe(
-      Effect.tap(Effect.log),
       Effect.flatMap(Schema.decodeUnknown(PaginatedTodoResponse)),
       Effect.withSpan("todo-search"),
     );
