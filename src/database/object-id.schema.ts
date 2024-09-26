@@ -28,5 +28,6 @@ export const ObjectIdUrlParamSchema = S.Struct({
 
 export const ObjectIdField = Model.Field({
   json: ObjectIdSchema,
+  update: ObjectIdFromSelf,
   select: ObjectIdFromSelf,
 });
