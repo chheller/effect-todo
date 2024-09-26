@@ -7,7 +7,15 @@ import {
   MongoDatabaseProviderLive,
   MongoDatabaseReaderProvider,
 } from "../../../database/mongo-database-provider";
-import type { TodoModel } from "../todo-domain";
+import {
+  PaginatedTodoResponse,
+  type SearchTodoModel,
+  TodoModel,
+} from "../todo-domain";
+import type { ObjectIdSchema } from "../../../database/object-id.schema";
+import { makePaginatedSearchAggregation } from "../../../database/search-aggregation";
+import { Schema } from "@effect/schema";
+import type { ParseError } from "@effect/schema/ParseResult";
 
 /**
  * Effect for creating the TodoQueryRepository
@@ -20,32 +28,43 @@ export const makeTodoQueryRepository = Effect.gen(function* () {
   );
   const useTodos = mongoDatabaseProvider.useCollection(collection);
 
-  const readMany = () =>
-    useTodos((_) => _.find({}).toArray()).pipe(
-      Effect.withSpan("todo-read-many"),
+  const search = (search: typeof SearchTodoModel.Type) =>
+    useTodos((_) =>
+      _.aggregate([
+        { $match: search.match },
+        ...makePaginatedSearchAggregation(search),
+      ]).next(),
+    ).pipe(
+      Effect.flatMap(Schema.decodeUnknown(PaginatedTodoResponse)),
+      Effect.withSpan("todo-search"),
     );
   const read = (_id: ObjectId) =>
     Effect.filterOrFail(
       useTodos((_) => _.findOne({ _id })),
       Predicate.isNotNull,
       () => new NoSuchElementException("Failed to fetch inserted document"),
-    ).pipe(Effect.withSpan("todo-read"));
+    ).pipe(
+      Effect.flatMap(Schema.decodeUnknown(TodoModel.select)),
+      Effect.withSpan("todo-read"),
+    );
 
-  return { read, readMany };
+  return { read, search };
 });
 
 export class TodoQueryRepository extends Context.Tag("TodoQueryRepository")<
   TodoQueryRepository,
   {
     readonly read: (
-      _id: ObjectId,
+      _id: typeof ObjectIdSchema.Type,
     ) => Effect.Effect<
-      WithId<TodoModel>,
-      GenericMongoDbException | NoSuchElementException
+      typeof TodoModel.select.Type,
+      GenericMongoDbException | NoSuchElementException | ParseError
     >;
-    readonly readMany: () => Effect.Effect<
-      TodoModel[],
-      GenericMongoDbException
+    readonly search: (
+      search: typeof SearchTodoModel.Type,
+    ) => Effect.Effect<
+      typeof PaginatedTodoResponse.Type,
+      GenericMongoDbException | ParseError
     >;
   }
 >() {

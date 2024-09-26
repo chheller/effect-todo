@@ -1,5 +1,9 @@
 import { Schema as S } from "@effect/schema";
-import type { ObjectId } from "mongodb";
+import { Model } from "@effect/sql";
+import { ObjectIdField } from "../../database/object-id.schema";
+import { SearchModel } from "../../http/search-schema";
+import { UserIdSchema } from "../../auth/auth0";
+import { PaginatedResponseModel } from "../../http/paginated-response";
 
 export class GenericTodoRepoError extends Error {
   _tag = "GenericTodoRepoError" as const;
@@ -12,28 +16,29 @@ export class GenericTodoRepoError extends Error {
     this.name = this._tag;
   }
 }
-
-export const TodoId = S.String.pipe(S.length(24));
-
-const TodoCommonDto = S.Struct({
+export class TodoModel extends Model.Class<TodoModel>("TodoModel")({
   description: S.String.pipe(S.minLength(1)),
+  userId: Model.GeneratedByApp(UserIdSchema),
   done: S.Boolean,
-});
+  id: ObjectIdField,
+}) {}
 
-export const TodoRequestDto = S.Struct({
-  ...TodoCommonDto.fields,
-});
+export class SearchTodoModel extends SearchModel.extend<SearchTodoModel>(
+  "SearchTodoModel",
+)({
+  match: S.Struct({
+    description: S.optional(S.String),
+    userId: S.optional(UserIdSchema),
+    done: S.optional(S.Boolean),
+  }),
+}) {}
 
-export const TodoResponseDto = S.Struct({
-  id: TodoId,
-  ...TodoCommonDto.fields,
-});
-
-export type TodoRequestDto = S.Schema.Type<typeof TodoRequestDto>;
-export type TodoResponseDto = S.Schema.Type<typeof TodoResponseDto>;
-
-export type TodoModel = {
-  description: string;
-  done: boolean;
-  id: ObjectId;
-};
+export class PaginatedTodoResponse extends Model.Class<PaginatedTodoResponse>(
+  "PaginatedTodoResponse",
+)({
+  ...Model.fields(PaginatedResponseModel),
+  items: Model.Field({
+    select: S.Array(TodoModel.select),
+    json: S.Array(TodoModel.json),
+  }),
+}) {}
