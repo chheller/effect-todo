@@ -1,6 +1,6 @@
-import type { SearchModel } from "../http/search-schema";
+import type { SearchSchema } from "../http/search-schema";
 
-export const makePaginatedSearchAggregation = (search: SearchModel) => {
+export const makePaginatedSearchAggregation = (search: SearchSchema) => {
   return [
     {
       $facet: {

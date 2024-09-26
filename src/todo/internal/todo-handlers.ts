@@ -19,7 +19,7 @@ import { PaginationSearchParamsSchema } from "../../http/pagination";
 import { SortRequestSchema } from "../../http/sort";
 import {
   PaginatedTodoResponse,
-  SearchTodoModel,
+  SearchTodoSchema,
   TodoModel,
 } from "./todo-domain";
 
@@ -31,7 +31,7 @@ const make = Effect.gen(function* () {
     const token = yield* AuthorizationToken;
     const id = yield* HttpRouter.schemaPathParams(ObjectIdUrlParamSchema);
     const result = yield* readRepository.search(
-      new SearchTodoModel({ match: { _id: id, userId: token.payload.sub } }),
+      new SearchTodoSchema({ match: { _id: id, userId: token.payload.sub } }),
     );
     if (result.items.length === 0)
       return yield* new NoSuchElementException(`No such todo with _id ${id}`);
@@ -41,7 +41,7 @@ const make = Effect.gen(function* () {
 
   const searchTodos = Effect.gen(function* () {
     const token = yield* AuthorizationToken;
-    const search = yield* HttpServerRequest.schemaBodyJson(SearchTodoModel);
+    const search = yield* HttpServerRequest.schemaBodyJson(SearchTodoSchema);
     const result = yield* readRepository.search({
       ...search,
       match: { ...search.match, userId: token.payload.sub },
@@ -57,7 +57,7 @@ const make = Effect.gen(function* () {
     );
     const sort = yield* HttpServerRequest.schemaSearchParams(SortRequestSchema);
     const search = { match: { userId: token.payload.sub }, pagination, sort };
-    const result = yield* readRepository.search(new SearchTodoModel(search));
+    const result = yield* readRepository.search(new SearchTodoSchema(search));
     const encoded = yield* Schema.encode(PaginatedTodoResponse.json)(result);
     return yield* HttpServerResponse.unsafeJson(encoded);
   }).pipe(Effect.withSpan("getAllTodosHandler"));

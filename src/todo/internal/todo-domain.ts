@@ -3,7 +3,7 @@ import { Model } from "@effect/sql";
 import { UserIdSchema } from "../../auth/auth0";
 import { ObjectIdField, ObjectIdSchema } from "../../database/object-id.schema";
 import { PaginatedResponseModel } from "../../http/paginated-response";
-import { SearchModel } from "../../http/search-schema";
+import { SearchSchema } from "../../http/search-schema";
 
 export class GenericTodoRepoError extends Error {
   _tag = "GenericTodoRepoError" as const;
@@ -23,8 +23,8 @@ export class TodoModel extends Model.Class<TodoModel>("TodoModel")({
   _id: ObjectIdField,
 }) {}
 
-export class SearchTodoModel extends SearchModel.extend<SearchTodoModel>(
-  "SearchTodoModel",
+export class SearchTodoSchema extends SearchSchema.extend<SearchTodoSchema>(
+  "SearchTodoSchema ",
 )({
   match: S.Struct({
     _id: S.optional(ObjectIdSchema),

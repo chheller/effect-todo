@@ -12,7 +12,7 @@ import type { ObjectIdSchema } from "../../../database/object-id.schema";
 import { makePaginatedSearchAggregation } from "../../../database/search-aggregation";
 import {
   PaginatedTodoResponse,
-  type SearchTodoModel,
+  type SearchTodoSchema,
   TodoModel,
 } from "../todo-domain";
 
@@ -27,7 +27,7 @@ export const makeTodoQueryRepository = Effect.gen(function* () {
   );
   const useTodos = mongoDatabaseProvider.useCollection(collection);
 
-  const search = (search: typeof SearchTodoModel.Type) =>
+  const search = (search: typeof SearchTodoSchema.Type) =>
     useTodos((_) =>
       _.aggregate([
         { $match: search.match },
@@ -60,7 +60,7 @@ export class TodoQueryRepository extends Context.Tag("TodoQueryRepository")<
       GenericMongoDbException | NoSuchElementException | ParseError
     >;
     readonly search: (
-      search: typeof SearchTodoModel.Type,
+      search: typeof SearchTodoSchema.Type,
     ) => Effect.Effect<
       typeof PaginatedTodoResponse.Type,
       GenericMongoDbException | ParseError
