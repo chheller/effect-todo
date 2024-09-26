@@ -28,9 +28,10 @@ const make = Effect.gen(function* () {
   const writeRepository = yield* TodoCommandRepository;
 
   const getTodoByIdHandler = Effect.gen(function* () {
+    const token = yield* AuthorizationToken;
     const id = yield* HttpRouter.schemaPathParams(ObjectIdUrlParamSchema);
     const result = yield* readRepository.search(
-      new SearchTodoModel({ match: { _id: id } }),
+      new SearchTodoModel({ match: { _id: id, userId: token.payload.sub } }),
     );
     if (result.items.length === 0)
       return yield* new NoSuchElementException(`No such todo with _id ${id}`);
@@ -39,18 +40,23 @@ const make = Effect.gen(function* () {
   }).pipe(Effect.withSpan("getTodoByIdHandler"));
 
   const searchTodos = Effect.gen(function* () {
+    const token = yield* AuthorizationToken;
     const search = yield* HttpServerRequest.schemaBodyJson(SearchTodoModel);
-    const result = yield* readRepository.search(search);
+    const result = yield* readRepository.search({
+      ...search,
+      match: { ...search.match, userId: token.payload.sub },
+    });
     const encoded = yield* Schema.encode(PaginatedTodoResponse.json)(result);
     return yield* HttpServerResponse.unsafeJson(encoded);
   }).pipe(Effect.withSpan("getAllTodosHandler"));
 
   const getAllTodosHandler = Effect.gen(function* () {
+    const token = yield* AuthorizationToken;
     const pagination = yield* HttpServerRequest.schemaSearchParams(
       PaginationSearchParamsSchema,
     );
     const sort = yield* HttpServerRequest.schemaSearchParams(SortRequestSchema);
-    const search = { match: {}, pagination, sort };
+    const search = { match: { userId: token.payload.sub }, pagination, sort };
     const result = yield* readRepository.search(new SearchTodoModel(search));
     const encoded = yield* Schema.encode(PaginatedTodoResponse.json)(result);
     return yield* HttpServerResponse.unsafeJson(encoded);
@@ -74,8 +80,9 @@ const make = Effect.gen(function* () {
   }).pipe(Effect.withSpan("updateTodoHandler"));
 
   const deleteTodoHandler = Effect.gen(function* () {
+    const token = yield* AuthorizationToken;
     const id = yield* HttpRouter.schemaPathParams(ObjectIdUrlParamSchema);
-    yield* writeRepository.delete(id);
+    yield* writeRepository.delete(id, token.payload.sub);
     return HttpServerResponse.empty({ status: 204 });
   }).pipe(Effect.withSpan("deleteTodoHandler"));
 

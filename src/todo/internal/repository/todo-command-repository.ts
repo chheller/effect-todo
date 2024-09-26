@@ -46,7 +46,11 @@ export const makeTodoCommandRepository = Effect.gen(function* () {
     Schema.encode(TodoModel.update)({ ...todo, userId, _id }).pipe(
       Effect.flatMap((encodedTodo) =>
         useTodos((_) =>
-          _.updateOne({ _id }, { $set: encodedTodo }, { upsert: false }),
+          _.updateOne(
+            { _id, userId },
+            { $set: encodedTodo },
+            { upsert: false },
+          ),
         ),
       ),
       Effect.filterOrFail(
@@ -58,8 +62,11 @@ export const makeTodoCommandRepository = Effect.gen(function* () {
       Effect.withSpan("todo-update"),
     );
 
-  const delete_ = (_id: typeof ObjectIdSchema.Type) =>
-    useTodos((_) => _.deleteOne({ _id }))
+  const delete_ = (
+    _id: typeof ObjectIdSchema.Type,
+    userId: typeof UserIdSchema.Type,
+  ) =>
+    useTodos((_) => _.deleteOne({ _id, userId }))
       .pipe(Effect.withSpan("todo-delete"))
       .pipe(
         Effect.filterOrFail(
@@ -98,6 +105,7 @@ export class TodoCommandRepository extends Context.Tag("TodoCommandRepository")<
 
     readonly delete: (
       _id: typeof ObjectIdSchema.Type,
+      userId: typeof UserIdSchema.Type,
     ) => Effect.Effect<void, GenericMongoDbException | ParseError>;
   }
 >() {
