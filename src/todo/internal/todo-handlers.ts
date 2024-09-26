@@ -42,6 +42,7 @@ const make = Effect.gen(function* () {
   const searchTodos = Effect.gen(function* () {
     const token = yield* AuthorizationToken;
     const search = yield* HttpServerRequest.schemaBodyJson(SearchTodoSchema);
+    yield* Effect.log(JSON.stringify(search, null, 2));
     const result = yield* readRepository.search({
       ...search,
       match: { ...search.match, userId: token.payload.sub },

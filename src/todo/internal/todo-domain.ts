@@ -1,6 +1,7 @@
 import { Schema as S } from "@effect/schema";
 import { Model } from "@effect/sql";
 import { UserIdSchema } from "../../auth/auth0";
+import { MongoSafeString } from "../../database/mongo-safe-string";
 import { ObjectIdField, ObjectIdSchema } from "../../database/object-id.schema";
 import { PaginatedResponseModel } from "../../http/paginated-response";
 import { SearchSchema } from "../../http/search-schema";
@@ -28,7 +29,7 @@ export class SearchTodoSchema extends SearchSchema.extend<SearchTodoSchema>(
 )({
   match: S.Struct({
     _id: S.optional(ObjectIdSchema),
-    description: S.optional(S.String),
+    description: S.optional(MongoSafeString),
     userId: S.optional(UserIdSchema),
     done: S.optional(S.Boolean),
   }),

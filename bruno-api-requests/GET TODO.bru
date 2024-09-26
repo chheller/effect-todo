@@ -5,7 +5,14 @@ meta {
 }
 
 get {
-  url: {{baseUrl}}/todo?
+  url: {{baseUrl}}/todo
   body: none
   auth: none
+}
+
+params:query {
+  ~page: 1
+  ~limit: 50
+  ~field: _id
+  ~direction: desc
 }
